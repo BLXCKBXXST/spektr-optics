@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const {pathToFileURL} = require('node:url');
-const {chromium, firefox, webkit} = require('/home/blxck/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const {playwright: {firefox, webkit}, engineName, launchBrowser, waitForLayout} = require('./test-browser.cjs');
 
 const target = path.resolve(process.argv[2] || path.join(__dirname, '..', 'portable', 'spektr.html'));
 const url = pathToFileURL(target).href;
@@ -19,12 +19,13 @@ async function openProfile(browser, options = {}, restricted = false) {
   page.on('pageerror', error => errors.push(error.message));
   page.on('request', request => {if (request.url() !== url) resources.push(request.url());});
   await page.goto(url);
+  await waitForLayout(page);
   const canvas = page.locator('#optics-xp-sketch canvas');
   await canvas.waitFor();
   await assertRendered(canvas);
   assert.match(await page.title(), /^Спектр(?:\s|$)/u, 'The standalone application has its own document title');
   assert.equal(await page.locator('iframe,script[src],link[rel="stylesheet"]').count(), 0, 'No wrapper frame, external scripts, or external styles');
-  assert.equal(await page.evaluate(() => Boolean(document.createElement('canvas').getContext('webgl'))), false, 'Test really runs without WebGL');
+  if (engineName === 'chromium') assert.equal(await page.evaluate(() => Boolean(document.createElement('canvas').getContext('webgl'))), false, 'Test really runs without WebGL');
   return {context, page, canvas, errors, resources};
 }
 
@@ -61,7 +62,7 @@ function finishProfile(profile, name, extra = {}) {
   for (const [name, engine] of [['Firefox', firefox], ['WebKit', webkit]]) {
     if (!fs.existsSync(engine.executablePath())) report.unavailableEngines.push(name);
   }
-  const browser = await chromium.launch({headless: true, executablePath: '/usr/bin/chromium', args: ['--no-sandbox', '--disable-webgl', '--disable-webgl2', '--disable-gpu']});
+  const browser = await launchBrowser({args: ['--disable-webgl', '--disable-webgl2', '--disable-gpu']});
   try {
     const desktop = await openProfile(browser);
     const {page, canvas} = desktop;
@@ -136,6 +137,7 @@ function finishProfile(profile, name, extra = {}) {
 
     for (const width of [320, 375, 736, 1280]) {
       await page.setViewportSize({width, height: 900});
+      await waitForLayout(page);
       for (const view of ['overview', 'top', 'optics', 'screen']) {
         await page.locator(`[data-view="${view}"]`).click();
         await assertRendered(canvas);

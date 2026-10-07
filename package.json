@@ -1,0 +1,15 @@
+{
+  "name": "spektr-optics",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Автономный оптический симулятор «Спектр»; npm нужен только для разработки.",
+  "engines": {"node": ">=20"},
+  "scripts": {
+    "build": "node tools/export-portable.cjs",
+    "test": "npm run build && npm run test:portable && npm run test:responsive && npm run test:regressions",
+    "test:portable": "node tools/check-portable.cjs",
+    "test:responsive": "node tools/check-responsive-windows.cjs",
+    "test:regressions": "node tests/check-optics-layout.cjs && node tests/check-optics-measurements.cjs && node tests/check-optics-values.cjs"
+  },
+  "devDependencies": {"playwright": "1.62.1"}
+}

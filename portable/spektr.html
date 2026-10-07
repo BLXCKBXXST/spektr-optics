@@ -8,19 +8,23 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Спектр — симулятор оптики</title>
   <style>
-    html{color-scheme:light;background:#dce1dc}
-    body{margin:0;padding:12px;font-family:Tahoma,Verdana,sans-serif}
-    main{max-width:1280px;margin:0 auto}
-    @media(max-width:620px){body{padding:6px}}
+    html{color-scheme:light;background:#dce1dc;--page-padding:12px}
+    body{margin:0;padding:var(--page-padding);font-family:Tahoma,Verdana,sans-serif;box-sizing:border-box}
+    main{width:100%;margin:0}
+    main>#optics-xp-sketch{height:calc(100vh - 2 * var(--page-padding));height:calc(100dvh - 2 * var(--page-padding))}
+    main>#optics-xp-sketch .xp-stage{height:auto}
+    @media(max-width:620px){html{--page-padding:6px}}
   </style>
 </head>
 <body>
   <main>
 <div id="optics-xp-sketch" aria-label="Спектр — симулятор оптической установки">
   <style>
-    #optics-xp-sketch{--xp-blue:#466faf;--xp-paper:#ece9d8;--xp-table:#b9ccd0;--xp-ink:#24323c;font:13px/1.4 Tahoma,Verdana,sans-serif;color:var(--xp-ink);color-scheme:light;width:100%;box-sizing:border-box}
+    #optics-xp-sketch{--xp-blue:#466faf;--xp-paper:#ece9d8;--xp-table:#b9ccd0;--xp-ink:#24323c;font:13px/1.4 Tahoma,Verdana,sans-serif;color:var(--xp-ink);color-scheme:light;width:100%;box-sizing:border-box;display:grid;grid-template-rows:minmax(320px,1fr) auto;gap:10px}
     #optics-xp-sketch *{box-sizing:border-box}
     #optics-xp-sketch .xp-window{background:var(--xp-paper);border:2px solid #456eab;border-radius:8px 8px 3px 3px;overflow:hidden;box-shadow:0 3px 9px #26384d1c}
+    #optics-xp-sketch .xp-scene-window{display:flex;flex-direction:column;min-width:0;min-height:320px}
+    #optics-xp-sketch .xp-control-window{min-width:0;align-self:start}
     #optics-xp-sketch .xp-title{display:flex;align-items:center;gap:9px;min-height:36px;padding:6px 12px;background:linear-gradient(#89a8d6 0%,var(--xp-blue) 16%,#436baa 83%,#355e9d);color:#fff;text-shadow:1px 1px #355684;font-weight:700}
     #optics-xp-sketch .xp-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 12px;border-top:1px solid #f8f7ef;border-bottom:1px solid #aca99b;background:var(--xp-paper)}
     #optics-xp-sketch .xp-view-group{display:flex;gap:3px;flex-wrap:wrap}
@@ -32,8 +36,8 @@
     #optics-xp-sketch .xp-toggles{display:flex;align-items:center;gap:12px;margin-left:auto;flex-wrap:wrap}
     #optics-xp-sketch .xp-label-toggle{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px}
     #optics-xp-sketch input{accent-color:#4d76ac}
-    #optics-xp-sketch .xp-stage{position:relative;margin:9px 9px 0;background:var(--xp-table);border:1px solid #89989f;box-shadow:inset 1px 1px #728891;overflow:hidden}
-    #optics-xp-sketch .xp-stage canvas{width:100%;height:470px;display:block;touch-action:none}
+    #optics-xp-sketch .xp-stage{position:relative;flex:1 1 auto;min-height:164px;height:470px;margin:9px;background:var(--xp-table);border:1px solid #89989f;box-shadow:inset 1px 1px #728891;overflow:hidden}
+    #optics-xp-sketch .xp-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
     #optics-xp-sketch .xp-hover{position:absolute;display:none;padding:4px 7px;background:#fffde9;border:1px solid #9c967f;box-shadow:1px 2px 3px #394c5122;font-size:11px;pointer-events:none;white-space:nowrap}
     #optics-xp-sketch .xp-controls{display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding:12px}
     #optics-xp-sketch .xp-filter{display:flex;align-items:center;gap:7px}
@@ -43,11 +47,19 @@
     #optics-xp-sketch .xp-screen-control button{padding:0 10px;min-width:46px;min-height:38px;font-size:25px;line-height:1;color:#315783;border-color:#6d86a3}
     #optics-xp-sketch .xp-screen-control button:disabled{color:#929c9f;border-color:#adb1ad;opacity:.65}
     #optics-xp-sketch .xp-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-    @media(max-width:620px){#optics-xp-sketch .xp-stage canvas{height:290px}#optics-xp-sketch .xp-title{padding:6px 9px}#optics-xp-sketch .xp-toolbar{gap:8px;padding:8px}#optics-xp-sketch button{padding:5px 8px}#optics-xp-sketch .xp-controls{gap:11px;padding:10px}#optics-xp-sketch .xp-toggles{margin-left:0;gap:5px 12px}#optics-xp-sketch .xp-screen-control{margin-left:auto}}
+    @media(max-width:620px){#optics-xp-sketch .xp-stage{height:290px;margin:7px}#optics-xp-sketch .xp-title{padding:6px 9px}#optics-xp-sketch .xp-toolbar{gap:8px;padding:8px}#optics-xp-sketch button{padding:5px 8px}#optics-xp-sketch .xp-controls{gap:11px;padding:10px}#optics-xp-sketch .xp-toggles{margin-left:0;gap:5px 12px}#optics-xp-sketch .xp-screen-control{margin-left:auto}}
     @media(pointer:coarse){#optics-xp-sketch button,#optics-xp-sketch select{min-height:44px}#optics-xp-sketch .xp-label-toggle{min-height:44px}#optics-xp-sketch select{font-size:16px}}
   </style>
-  <div class="xp-window">
-    <div class="xp-title"><span>Спектр · оптический симулятор</span></div>
+  <section class="xp-window xp-scene-window" aria-labelledby="spektr-scene-title">
+    <div class="xp-title" id="spektr-scene-title"><span>Спектр · оптический симулятор</span></div>
+    <div class="xp-stage">
+      <canvas aria-label="Объёмный эскиз установки. Источник справа; отдельный блок щели; общий блок линзы, решётки и фильтра; подвижный экран слева.">Объёмная компоновка оптической скамьи.</canvas>
+      <div class="xp-hover" role="tooltip"></div>
+    </div>
+    <noscript>Для запуска «Спектра» включите JavaScript в браузере. Интернет не требуется.</noscript>
+  </section>
+  <section class="xp-window xp-control-window" aria-labelledby="spektr-controls-title">
+    <div class="xp-title" id="spektr-controls-title"><span>Управление</span></div>
     <div class="xp-toolbar">
       <div class="xp-view-group" role="group" aria-label="Ракурс установки">
         <button type="button" class="cursor-interaction" data-view="overview" aria-pressed="true">Общий вид</button>
@@ -61,17 +73,12 @@
         <label class="xp-label-toggle cursor-interaction"><input type="checkbox" data-light checked> Источник света</label>
       </div>
     </div>
-    <div class="xp-stage">
-      <canvas aria-label="Объёмный эскиз установки. Источник справа; отдельный блок щели; общий блок линзы, решётки и фильтра; подвижный экран слева.">Объёмная компоновка оптической скамьи.</canvas>
-      <div class="xp-hover" role="tooltip"></div>
-    </div>
     <div class="xp-controls">
       <label class="xp-filter">Фильтр <select data-filter aria-label="Светофильтр"><option value="none">Без фильтра</option><option value="green">Зелёный</option><option value="red">Красный</option></select></label>
       <div class="xp-screen-control" role="group" aria-label="Положение экрана"><button type="button" class="cursor-interaction" data-move="-10" aria-label="Экран: предыдущая отметка 10 мм">←</button><span>Экран</span><button type="button" class="cursor-interaction" data-move="10" aria-label="Экран: следующая отметка 10 мм">→</button></div>
     </div>
     <span class="xp-sr" data-live aria-live="polite"></span>
-    <noscript>Для запуска «Спектра» включите JavaScript в браузере. Интернет не требуется.</noscript>
-  </div>
+  </section>
   <script>
   (() => {
     const root = document.getElementById('optics-xp-sketch');

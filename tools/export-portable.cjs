@@ -1,8 +1,7 @@
 // Development-only packaging: the generated HTML needs no Node.js or other runtime.
 const fs = require('node:fs');
 const path = require('node:path');
-const source = process.argv[2];
-if (!source) throw new Error('Usage: node tools/export-portable.cjs /absolute/path/to/fragment.html [destination.html]');
+const source = process.argv[2] || path.join(__dirname, '../src/optics-xp-layout.html');
 const destination = path.resolve(process.argv[3] || path.join(__dirname, '../portable/spektr.html'));
 if (path.resolve(source) === destination) throw new Error('Keep the editable fragment separate from the export.');
 const fragment = fs.readFileSync(source, 'utf8');

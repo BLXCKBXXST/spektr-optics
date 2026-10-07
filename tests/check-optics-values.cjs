@@ -1,14 +1,13 @@
-const {chromium}=require('/home/blxck/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const {launchBrowser, targetUrl, screenshotPath, waitForLayout}=require('../tools/test-browser.cjs');
 const assert=require('node:assert/strict');
-const path=require('node:path');
 (async()=>{
-  const browser=await chromium.launch({headless:true,executablePath:'/usr/bin/chromium',args:['--no-sandbox']});
+  const browser=await launchBrowser();
   try{
     const page=await browser.newPage({viewport:{width:1060,height:900},deviceScaleFactor:1});
     const errors=[];page.on('pageerror',e=>errors.push({message:e.message,stack:e.stack}));
-    await page.goto('file://'+path.join(__dirname,'optics-xp-layout-preview.html'));
-    const app=page.frameLocator('iframe');await app.locator('canvas').waitFor();
-    const frame=page.frames().find(f=>f.parentFrame()),canvas=app.locator('canvas');
+    await page.goto(targetUrl);
+    const app=page;await app.locator('canvas').waitFor();
+    const frame=page,canvas=app.locator('canvas');
     const restore=async(screenMm,labels=false,values=true)=>frame.evaluate(({screenMm,labels,values})=>window.dispatchEvent(new CustomEvent('openai:set_globals',{detail:{globals:{widgetState:{modelContent:{view:'top',screenMm,filter:'none',light:true},privateContent:{labels,values}}}}})),{screenMm,labels,values});
     const screenMm=async()=>Number((await app.locator('[data-live]').textContent()).match(/\d+/)?.[0]);
     assert.equal(await app.locator('.xp-toolbar input[type="checkbox"]').count(),3,'Names, values, and light switches share the toolbar');
@@ -70,10 +69,11 @@ const path=require('node:path');
     assert.equal(await screenMm(),310,'An arrow aligns a freely dragged position to the next 10-mm mark');
     for(const width of [736,375,320]){
       await page.setViewportSize({width,height:1000});
+      await waitForLayout(page);
       const layout=await frame.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:document.documentElement.clientWidth,filter:document.querySelector('[data-filter]').getBoundingClientRect().x,controls:document.querySelector('.xp-controls').getBoundingClientRect().x}));
       assert.ok(layout.scroll<=layout.width+1,`No horizontal overflow at ${width}`);
       assert.ok(layout.filter-layout.controls<100,`Filter remains at the left of the control strip at ${width}`);
-      await app.locator('#optics-xp-sketch').screenshot({path:path.join(__dirname,`xp-values-controls-${width}.png`)});
+      await app.locator('#optics-xp-sketch').screenshot({path:screenshotPath(`xp-values-controls-${width}.png`)});
     }
     console.log(JSON.stringify({errors,checks:'Three toolbar toggles, left-aligned filter, enlarged flanking arrows, directional 10-mm snapping, independent/restored values, 1-mm dragging, responsive controls'},null,2));
     if(errors.length)process.exitCode=1;

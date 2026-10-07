@@ -8,10 +8,12 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Спектр — симулятор оптики</title>
   <style>
-    html{color-scheme:light;background:#dce1dc}
-    body{margin:0;padding:12px;font-family:Tahoma,Verdana,sans-serif}
-    main{max-width:1280px;margin:0 auto}
-    @media(max-width:620px){body{padding:6px}}
+    html{color-scheme:light;background:#dce1dc;--page-padding:12px}
+    body{margin:0;padding:var(--page-padding);font-family:Tahoma,Verdana,sans-serif;box-sizing:border-box}
+    main{width:100%;margin:0}
+    main>#optics-xp-sketch{height:calc(100vh - 2 * var(--page-padding));height:calc(100dvh - 2 * var(--page-padding))}
+    main>#optics-xp-sketch .xp-stage{height:auto}
+    @media(max-width:620px){html{--page-padding:6px}}
   </style>
 </head>
 <body>
