@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+tools/test-output/
+tests/test-output/
+tests/*-preview.html
+tests/xp-*.png
+playwright-report/
+test-results/

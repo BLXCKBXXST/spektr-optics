@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Спектр — симулятор оптики</title>
+  <style>
+    html{color-scheme:light;background:#dce1dc}
+    body{margin:0;padding:12px;font-family:Tahoma,Verdana,sans-serif}
+    main{max-width:1280px;margin:0 auto}
+    @media(max-width:620px){body{padding:6px}}
+  </style>
+</head>
+<body>
+  <main>
+<div id="optics-xp-sketch" aria-label="Спектр — симулятор оптической установки">
+  <style>
+    #optics-xp-sketch{--xp-blue:#466faf;--xp-paper:#ece9d8;--xp-table:#b9ccd0;--xp-ink:#24323c;font:13px/1.4 Tahoma,Verdana,sans-serif;color:var(--xp-ink);color-scheme:light;width:100%;box-sizing:border-box}
+    #optics-xp-sketch *{box-sizing:border-box}
+    #optics-xp-sketch .xp-window{background:var(--xp-paper);border:2px solid #456eab;border-radius:8px 8px 3px 3px;overflow:hidden;box-shadow:0 3px 9px #26384d1c}
+    #optics-xp-sketch .xp-title{display:flex;align-items:center;gap:9px;min-height:36px;padding:6px 12px;background:linear-gradient(#89a8d6 0%,var(--xp-blue) 16%,#436baa 83%,#355e9d);color:#fff;text-shadow:1px 1px #355684;font-weight:700}
+    #optics-xp-sketch .xp-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 12px;border-top:1px solid #f8f7ef;border-bottom:1px solid #aca99b;background:var(--xp-paper)}
+    #optics-xp-sketch .xp-view-group{display:flex;gap:3px;flex-wrap:wrap}
+    #optics-xp-sketch button,#optics-xp-sketch select{font:inherit;color:var(--xp-ink)}
+    #optics-xp-sketch button{min-height:29px;padding:4px 12px;border:1px solid #8c939c;border-radius:3px;background:linear-gradient(#fcfbf6,#ece9db);box-shadow:inset 1px 1px #fff,inset -1px -1px #d4d0be}
+    #optics-xp-sketch button:hover{border-color:#537baa;background:linear-gradient(#fffdf8,#eeeadd)}
+    #optics-xp-sketch button[aria-pressed="true"]{background:#d9e4f2;border-color:#5577a5;box-shadow:inset 1px 2px 3px #899caf45}
+    #optics-xp-sketch button:focus-visible,#optics-xp-sketch select:focus-visible{outline:2px solid #2f609b;outline-offset:2px}
+    #optics-xp-sketch .xp-toggles{display:flex;align-items:center;gap:12px;margin-left:auto;flex-wrap:wrap}
+    #optics-xp-sketch .xp-label-toggle{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px}
+    #optics-xp-sketch input{accent-color:#4d76ac}
+    #optics-xp-sketch .xp-stage{position:relative;margin:9px 9px 0;background:var(--xp-table);border:1px solid #89989f;box-shadow:inset 1px 1px #728891;overflow:hidden}
+    #optics-xp-sketch .xp-stage canvas{width:100%;height:470px;display:block;touch-action:none}
+    #optics-xp-sketch .xp-hover{position:absolute;display:none;padding:4px 7px;background:#fffde9;border:1px solid #9c967f;box-shadow:1px 2px 3px #394c5122;font-size:11px;pointer-events:none;white-space:nowrap}
+    #optics-xp-sketch .xp-controls{display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding:12px}
+    #optics-xp-sketch .xp-filter{display:flex;align-items:center;gap:7px}
+    #optics-xp-sketch select{height:29px;min-width:150px;border:1px solid #8496ac;border-radius:2px;background:#fdfcf6;padding:3px 23px 3px 7px}
+    #optics-xp-sketch .xp-screen-control{display:flex;align-items:center;gap:10px;margin-left:auto}
+    #optics-xp-sketch .xp-screen-control span{min-width:52px;text-align:center}
+    #optics-xp-sketch .xp-screen-control button{padding:0 10px;min-width:46px;min-height:38px;font-size:25px;line-height:1;color:#315783;border-color:#6d86a3}
+    #optics-xp-sketch .xp-screen-control button:disabled{color:#929c9f;border-color:#adb1ad;opacity:.65}
+    #optics-xp-sketch .xp-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+    @media(max-width:620px){#optics-xp-sketch .xp-stage canvas{height:290px}#optics-xp-sketch .xp-title{padding:6px 9px}#optics-xp-sketch .xp-toolbar{gap:8px;padding:8px}#optics-xp-sketch button{padding:5px 8px}#optics-xp-sketch .xp-controls{gap:11px;padding:10px}#optics-xp-sketch .xp-toggles{margin-left:0;gap:5px 12px}#optics-xp-sketch .xp-screen-control{margin-left:auto}}
+    @media(pointer:coarse){#optics-xp-sketch button,#optics-xp-sketch select{min-height:44px}#optics-xp-sketch .xp-label-toggle{min-height:44px}#optics-xp-sketch select{font-size:16px}}
+  </style>
+  <div class="xp-window">
+    <div class="xp-title"><span>Спектр · оптический симулятор</span></div>
+    <div class="xp-toolbar">
+      <div class="xp-view-group" role="group" aria-label="Ракурс установки">
+        <button type="button" class="cursor-interaction" data-view="overview" aria-pressed="true">Общий вид</button>
+        <button type="button" class="cursor-interaction" data-view="top" aria-pressed="false">Сверху</button>
+        <button type="button" class="cursor-interaction" data-view="optics" aria-pressed="false">Оптика</button>
+        <button type="button" class="cursor-interaction" data-view="screen" aria-pressed="false">Экран</button>
+      </div>
+      <div class="xp-toggles" role="group" aria-label="Отображение и свет">
+        <label class="xp-label-toggle cursor-interaction"><input type="checkbox" data-labels checked> Подписи</label>
+        <label class="xp-label-toggle cursor-interaction"><input type="checkbox" data-values checked> Значения</label>
+        <label class="xp-label-toggle cursor-interaction"><input type="checkbox" data-light checked> Источник света</label>
+      </div>
+    </div>
+    <div class="xp-stage">
+      <canvas aria-label="Объёмный эскиз установки. Источник справа; отдельный блок щели; общий блок линзы, решётки и фильтра; подвижный экран слева.">Объёмная компоновка оптической скамьи.</canvas>
+      <div class="xp-hover" role="tooltip"></div>
+    </div>
+    <div class="xp-controls">
+      <label class="xp-filter">Фильтр <select data-filter aria-label="Светофильтр"><option value="none">Без фильтра</option><option value="green">Зелёный</option><option value="red">Красный</option></select></label>
+      <div class="xp-screen-control" role="group" aria-label="Положение экрана"><button type="button" class="cursor-interaction" data-move="-10" aria-label="Экран: предыдущая отметка 10 мм">←</button><span>Экран</span><button type="button" class="cursor-interaction" data-move="10" aria-label="Экран: следующая отметка 10 мм">→</button></div>
+    </div>
+    <span class="xp-sr" data-live aria-live="polite"></span>
+    <noscript>Для запуска «Спектра» включите JavaScript в браузере. Интернет не требуется.</noscript>
+  </div>
+  <script>
+  (() => {
+    const root = document.getElementById('optics-xp-sketch');
+    const canvas = root.querySelector('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { const message=document.createElement('p');message.setAttribute('role','alert');message.textContent='Для «Спектра» нужен браузер с поддержкой Canvas 2D и JavaScript.';canvas.replaceWith(message);return; }
+    const stage = root.querySelector('.xp-stage');
+    const tooltip = root.querySelector('.xp-hover');
+    const state = { view: 'overview', screen: 250, light: true, filter: 'none', labels: true, values: true };
+    const design = { blue: '#466faf', table: '#b9ccd0', facets: 12 };
+    const views = {
+      overview: { az: -116, el: 24, bounds: [[-10,-155,-8],[1270,155,325]], caption: 'Оптическая скамья' },
+      top: { az: -90, el: 90, bounds: [[-10,-165,-8],[1270,165,325]], caption: 'Вид сверху · координаты в мм' },
+      optics: { az: -133, el: 21, bounds: [[765,-138,0],[1270,112,280]], caption: 'Общий блок и отдельная щель · координаты в мм' },
+      screen: { az: -180, el: 3, bounds: [[244,-153,65],[262,153,326]], caption: 'Экран · шкала с центральным нулём' }
+    };
+    let W = 900, H = 470, faces = [], scale = 1, ox = 0, oy = 0, right, up, eye;
+    let hitScreen = null, drag = null, screenRuler = null, positionGuides = [];
+    const rasterCanvas = document.createElement('canvas');
+    const rasterContext = rasterCanvas.getContext('2d');
+    let rasterImage, rasterDepth, rasterWords, rasterRatio = 2, labelBoxes = [];
+    let rasterBudget=1200000, renderPending=0;
+    const storageKey='spektr.optics.v1';
+    let staticFaceCount=0, staticCache=null;
+    const texturePixels = new WeakMap();
+    let railTexture = null, screenTexture = null, screenTextureKey = '';
+    const rad = x => x * Math.PI / 180;
+    const dot = (a,b) => a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+    const sub = (a,b) => a.map((v,i)=>v-b[i]);
+    const cross = (a,b) => [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+    const norm = a => { const l=Math.hypot(...a)||1; return a.map(v=>v/l); };
+    const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+    function rgb(hex, factor=1) { const n=parseInt(hex.slice(1),16); return `rgb(${[n>>16,(n>>8)&255,n&255].map(x=>Math.round(clamp(x*factor,0,255))).join(',')})`; }
+    function project(p) { return [ox+dot(p,right)*scale,oy-dot(p,up)*scale]; }
+    function poly(p,color,shade=false,alpha=1) {
+      let fill=color;
+      if(shade){ const n=norm(cross(sub(p[1],p[0]),sub(p[2],p[0]))); fill=rgb(color,.77+.23*Math.abs(dot(n,[-.4,-.35,.845]))); }
+      faces.push({p,fill,alpha,depth:p.reduce((s,v)=>s+dot(v,eye),0)/p.length});
+    }
+    function line(p,color='#626a69',width=1) { faces.push({p,stroke:color,width,alpha:1,depth:p.reduce((s,v)=>s+dot(v,eye),0)/p.length+.08}); }
+    function decal(p,texture,uv=[[0,0],[1,0],[1,1],[0,1]]) { faces.push({p,texture,uv,alpha:1,depth:p.reduce((s,v)=>s+dot(v,eye),0)/p.length}); }
+    function box(x0,x1,y0,y1,z0,z1,color,triangles=false){
+      const v=[[x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0],[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]];
+      const f=[[0,3,2,1],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7],[4,5,6,7]];
+      f.forEach(ids=>poly(ids.map(j=>v[j]),color,true));
+    }
+    function cylinderZ(x,y,z0,z1,r,color,n=8){
+      const a=[],b=[];for(let i=0;i<n;i++){const t=i*2*Math.PI/n;a.push([x+r*Math.cos(t),y+r*Math.sin(t),z0]);b.push([x+r*Math.cos(t),y+r*Math.sin(t),z1]);}
+      for(let i=0;i<n;i++)poly([a[i],a[(i+1)%n],b[(i+1)%n],b[i]],color,true);
+      poly(b,color,true);
+    }
+    function ring(x,y,z,r,inner,width,color,n=design.facets,glass=null){
+      const front=[],back=[],hole=[],backHole=[];
+      for(let i=0;i<n;i++){const a=i*2*Math.PI/n;front.push([x-width/2,y+Math.cos(a)*r,z+Math.sin(a)*r]);back.push([x+width/2,y+Math.cos(a)*r,z+Math.sin(a)*r]);hole.push([x-width/2-.1,y+Math.cos(a)*inner,z+Math.sin(a)*inner]);backHole.push([x+width/2,y+Math.cos(a)*inner,z+Math.sin(a)*inner]);}
+      for(let i=0;i<n;i++){const j=(i+1)%n;poly([front[i],front[j],back[j],back[i]],color,true);poly([front[i],hole[i],hole[j],front[j]],color,true);poly([back[j],backHole[j],backHole[i],back[i]],color,true);poly([hole[j],hole[i],backHole[i],backHole[j]],'#a4afa7',true);}
+      if(glass){poly(hole,glass,false,.87);for(let i=0;i<n;i+=3)poly([[x-width/2-.3,y,z],hole[i],hole[(i+2)%n]],'#e5f0e6',false,.17);}
+      return x-width/2-.8;
+    }
+    function screw(x,y,z){cylinderZ(x,y,z,z+4,4,'#8f9692',6);line([[x-2,y,z+4.4],[x+2,y,z+4.4]],'#535f60',1);}
+    function base(x0,x1,individual=false){const edge=individual?37:33;box(x0,x1,-edge,33,45,82,'#c9c7b9');screw(x0+10,-20,82);screw(x1-10,20,82);box(x0+3,x1-3,-edge-4,-edge,49,76,individual?'#8d9a93':'#989d96');}
+    function holder(x,type){
+      cylinderZ(x,0,82,144,14,'#c5c5b8',8);cylinderZ(x,0,140,153,8,'#989f9b',8);box(x-15,x+15,-34,34,143,153,'#bfc2b6');
+      const glass=type==='lens'?'#adc7c8':type==='grating'?'#b3c3bc':type==='red'?'#a75243':type==='green'?'#65966b':null;
+      const face=ring(x,0,195,48,31,17,'#ddd9c9',design.facets,glass);
+      if(type==='slit'){
+        const disc=Array.from({length:design.facets},(_,i)=>{const a=i*2*Math.PI/design.facets;return[face,30.7*Math.cos(a),195+30.7*Math.sin(a)];});
+        poly(disc,'#485454');poly([[face-.2,-1,178],[face-.2,1,178],[face-.2,1,212],[face-.2,-1,212]],'#fff2c1');
+      }
+      if(type==='grating'){for(let y=-22;y<=22;y+=4){const h=Math.sqrt(29*29-y*y);line([[face-.2,y,195-h],[face-.2,y,195+h]],'#7b9394',.55);}}
+      if(type==='lens')line([[face-.3,-18,215],[face-.3,2,222],[face-.3,15,215]],'#f0f4e9',1.4);
+    }
+    function wavelengthColor(w){
+      const keys=[[410,[128,104,190]],[450,[91,135,209]],[490,[90,170,190]],[530,[114,184,110]],[570,[211,194,101]],[610,[213,151,91]],[670,[195,102,94]],[710,[160,88,89]]];
+      let i=0;while(i<keys.length-2&&w>keys[i+1][0])i++;const t=clamp((w-keys[i][0])/(keys[i+1][0]-keys[i][0]),0,1);
+      return 'rgb('+keys[i][1].map((a,k)=>Math.round(a*(1-t)+keys[i+1][1][k]*t)).join(',')+')';
+    }
+    function screenFace(x){
+      const key=[state.light,state.filter,state.screen,state.view,Math.round(scale*100)].join(':');
+      const p=[[x,-135,110],[x,135,110],[x,135,305],[x,-135,305]];
+      if(key===screenTextureKey&&screenTexture){decal(p,screenTexture,[[1,1],[0,1],[0,0],[1,0]]);return;}
+      const texture=screenTexture||document.createElement('canvas');
+      if(texture.width!==1080||texture.height!==780){texture.width=1080;texture.height=780;}
+      const c=texture.getContext('2d');c.setTransform(4,0,0,4,0,0);c.fillStyle='#d4dfd0';c.fillRect(0,0,270,195);
+      if(state.light){
+        const D=855-state.screen;
+        for(const m of[3,2,1])for(const sign of[-1,1])for(let w=410;w<=700;w+=5){
+          const a=m*w/10000,b=m*(w+6)/10000;const y1=sign*D*Math.tan(Math.asin(a)),y2=sign*D*Math.tan(Math.asin(b));
+          if(Math.min(Math.abs(y1),Math.abs(y2))>132)continue;
+          const pass=state.filter==='none'?1:state.filter==='green'?Math.exp(-.5*((w-535)/30)**2):Math.exp(-.5*((w-650)/38)**2);
+          c.globalAlpha=pass*(m===1?.72:m===2?.46:.10);c.fillStyle=wavelengthColor(w);
+          const left=clamp(Math.min(y1,y2),-132,132),right=clamp(Math.max(y1,y2),-132,132);
+          c.fillRect(left+135,9,right-left,177);
+        }
+        c.fillStyle=state.filter==='red'?'#e4a688':state.filter==='green'?'#bce0a5':'#fff1b5';
+        for(const [width,alpha]of[[7,.1],[3,.25],[1.2,.84]]){c.globalAlpha=alpha;c.fillRect(135-width,9,width*2,177);}
+      }
+      c.globalAlpha=1;c.strokeStyle='#52605b';c.lineWidth=Math.max(.45,.65/scale);c.beginPath();c.moveTo(25,124);c.lineTo(245,124);c.stroke();
+      c.fillStyle='#41534c';c.font=`${11/scale}px Tahoma, sans-serif`;c.textAlign='center';c.textBaseline='middle';
+      const every=state.view==='screen'?Math.max(1,Math.ceil(14/(10*scale))):scale>.9?2:100;
+      for(let y=-110;y<=110;y+=5){const major=y%10===0;c.beginPath();c.moveTo(135+y,124);c.lineTo(135+y,major?116:120);c.stroke();if(major&&(y===0||y%(every*10)===0))c.fillText(String(Math.abs(y)/10),135+y,108);}
+      texturePixels.delete(texture);screenTexture=texture;screenTextureKey=key;decal(p,texture,[[1,1],[0,1],[0,0],[1,0]]);
+    }
+    function railScale(){
+      if(!railTexture){
+        railTexture=document.createElement('canvas');railTexture.width=3090;railTexture.height=192;
+        const c=railTexture.getContext('2d');c.scale(3,3);c.strokeStyle='#56635b';c.fillStyle='#3e514b';c.textAlign='center';c.textBaseline='middle';c.font='17px Tahoma, sans-serif';
+        for(let x=0;x<=1000;x+=10){c.lineWidth=x%100===0?1.2:.8;c.beginPath();c.moveTo(x+12,4);c.lineTo(x+12,x%100===0?21:x%50===0?17:12);c.stroke();if(x%100===0)c.fillText(String(x),x+12,39);}
+        c.font='14px Tahoma, sans-serif';c.fillText('мм',44,57);
+      }
+      decal([[-12,-64,12.35],[1018,-64,12.35],[1018,-128,12.35],[-12,-128,12.35]],railTexture);
+    }
+    function railPointer(x,edge=-37,screenPointer=false){
+      if(!state.values)return;
+      const start=screenPointer?[x+17,-37.8,63]:[x,edge-.8,63];
+      positionGuides.push({value:x,path:[start,[x,edge-8,16],[x,-180,14]]});
+    }
+    function drawPositionGuides(){
+      canvas.dataset.positionValues=positionGuides.map(g=>g.value).join(',');
+      if(!positionGuides.length)return;
+      ctx.save();ctx.strokeStyle='#506971';ctx.fillStyle='#344f5b';ctx.lineWidth=1.05;ctx.font='11px Tahoma, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      const guides=positionGuides.map(g=>{const path=g.path.map(project),end=path[path.length-1],width=ctx.measureText(String(g.value)).width+8;return{...g,path,end,width,x:end[0]};}).sort((a,b)=>a.x-b.x);
+      // On narrow views, fan out the numeric tips without changing their rail coordinates.
+      for(let i=1;i<guides.length;i++)guides[i].x=Math.max(guides[i].x,guides[i-1].x+(guides[i-1].width+guides[i].width)/2+5);
+      const drift=guides.reduce((sum,g)=>sum+g.x-g.end[0],0)/guides.length;
+      guides.forEach(g=>g.x-=drift);
+      const first=guides[0],last=guides[guides.length-1],shift=clamp(0,8+first.width/2-first.x,W-8-last.width/2-last.x);
+      guides.forEach(g=>g.x+=shift);
+      const numberY=Math.min(H-16,Math.max(...guides.map(g=>g.end[1]))+22);
+      for(const g of guides){ctx.beginPath();ctx.moveTo(...g.path[0]);g.path.slice(1).forEach(v=>ctx.lineTo(...v));ctx.lineTo(g.x,numberY-10);ctx.stroke();ctx.fillRect(g.x-1,numberY-11,2,2);ctx.fillText(String(g.value),g.x,numberY);}
+      ctx.restore();
+    }
+    function screen(){
+      const x=state.screen; base(x+10,x+125);cylinderZ(x+17,0,82,115,15,'#bdc4b8',8);
+      box(x-4,x+4,-140,140,105,310,'#d6d9c7');
+      const face=x-4.5;
+      screenFace(face-.3);
+      box(x-6,x+6,-140,-134,105,310,'#c9c8b7');box(x-6,x+6,134,140,105,310,'#c9c8b7');
+      box(x-6,x+6,-140,140,105,111,'#c9c8b7');box(x-6,x+6,-140,140,304,310,'#dfdbca');
+      box(x-10,x+9,-14,14,83,128,'#a6b4ad');
+      for(const y of[-130,130])for(const z of[116,299])poly([[face-1,y-2,z-2],[face-1,y+2,z-2],[face-1,y+2,z+2],[face-1,y-2,z+2]],'#67766f');
+      if(state.view!=='screen')railPointer(x,-37,true);
+    }
+    function build(){
+      faces=[];positionGuides=[];
+      const detail=state.view==='optics', closeScreen=state.view==='screen';
+      poly([[-60,-165,-1],[1320,-165,-1],[1320,145,-1],[-60,145,-1]],'#7c969d',false,.14);
+      box(-20,1285,-138,112,0,12,'#b8bcb4');
+      box(0,1002,-28,28,12,45,'#babfb5');box(0,1002,-28,-21,44,50,'#d3d2c4');box(0,1002,21,28,44,50,'#d3d2c4');
+      if(!closeScreen){
+        railScale();
+        base(790,925);base(932,980,true);
+        cylinderZ(810,0,82,89,11,'#929d97',8);cylinderZ(810,0,89,105,4.5,'#b7bdb2',8);
+        if(state.filter!=='none')holder(810,state.filter);
+        holder(855,'grating');holder(900,'lens');holder(955,'slit');
+        for(const x of[810,855,900])railPointer(x);
+        railPointer(955,-41);
+        box(1005,1255,-85,85,12,92,'#c6c8bb',true);box(1005,1255,-85.3,85,89,97,'#9aa59c');box(1005,1255,-85,85,97,254,'#d3d0c0',true);
+        box(1040,1220,-84,-82,29,78,'#b5bbaf');box(1070,1190,-42,42,254,257,'#d9d6c7');
+        for(const x of[1076,1184])for(const y of[-36,36])screw(x,y,257);
+        ring(1003,0,195,36,26,5,'#8c9590',12,'#54615e');ring(991,0,195,24,17,23,'#9da59d',12,state.light?'#f2e8b9':'#69756e');
+        for(let z=126;z<=159;z+=6)line([[1175,-85.3,z],[1220,-85.3,z]],'#909d93',1);
+      }
+      staticFaceCount=faces.length;if(!detail)screen();
+    }
+    function camera(){
+      const v=views[state.view],az=rad(v.az),el=rad(v.el);
+      eye=[Math.cos(az)*Math.cos(el),Math.sin(az)*Math.cos(el),Math.sin(el)];
+      right=[-Math.sin(az),Math.cos(az),0];up=cross(right,eye).map(x=>-x);
+      let bounds=v.bounds;
+      if(state.view==='screen')bounds=[[state.screen-6,-153,85],[state.screen+7,153,326]];
+      else if(state.values)bounds=[[bounds[0][0],-190,bounds[0][2]],bounds[1]];
+      const [a,b]=bounds,pts=[];
+      for(const x of[a[0],b[0]])for(const y of[a[1],b[1]])for(const z of[a[2],b[2]])pts.push([dot([x,y,z],right),-dot([x,y,z],up)]);
+      const minX=Math.min(...pts.map(p=>p[0])),maxX=Math.max(...pts.map(p=>p[0])),minY=Math.min(...pts.map(p=>p[1])),maxY=Math.max(...pts.map(p=>p[1]));
+      const reserved=state.labels&&state.view!=='screen'?66:20;
+      const bottom=state.values&&state.view!=='screen'?54:35;
+      scale=Math.min((W-44)/(maxX-minX),(H-reserved-bottom)/(maxY-minY));
+      ox=W/2-(minX+maxX)*scale/2;oy=reserved+(H-reserved-bottom)/2+9-(minY+maxY)*scale/2;
+    }
+    const colorCache=new Map();
+    function colorChannels(color){
+      if(colorCache.has(color))return colorCache.get(color);
+      let channels;if(color.startsWith('#')){const n=parseInt(color.slice(1),16);channels=[n>>16,(n>>8)&255,n&255];}else channels=color.match(/[\d.]+/g).slice(0,3).map(Number);
+      colorCache.set(color,channels);return channels;
+    }
+    function packed(r,g,b){return (255<<24)|(Math.round(b)<<16)|(Math.round(g)<<8)|Math.round(r);}
+    function rasterTriangle(a,b,c,material){
+      const rw=rasterCanvas.width,rh=rasterCanvas.height;
+      const den=(b.y-c.y)*(a.x-c.x)+(c.x-b.x)*(a.y-c.y);
+      if(Math.abs(den)<.00001)return;
+      const x0=Math.max(0,Math.floor(Math.min(a.x,b.x,c.x))),x1=Math.min(rw-1,Math.ceil(Math.max(a.x,b.x,c.x)));
+      const y0=Math.max(0,Math.floor(Math.min(a.y,b.y,c.y))),y1=Math.min(rh-1,Math.ceil(Math.max(a.y,b.y,c.y)));
+      const dwA=(b.y-c.y)/den,dwB=(c.y-a.y)/den;
+      const [red,green,blue]=material.color||[0,0,0],solid=packed(red,green,blue);
+      for(let y=y0;y<=y1;y++){
+        let wa=((b.y-c.y)*(x0+.5-c.x)+(c.x-b.x)*(y+.5-c.y))/den;
+        let wb=((c.y-a.y)*(x0+.5-c.x)+(a.x-c.x)*(y+.5-c.y))/den;
+        for(let x=x0;x<=x1;x++,wa+=dwA,wb+=dwB){
+          const wc=1-wa-wb;if(wa<-.000001||wb<-.000001||wc<-.000001)continue;
+          const index=y*rw+x,z=wa*a.z+wb*b.z+wc*c.z;if(z+.005<rasterDepth[index])continue;
+          let r=red,g=green,bl=blue,alpha=material.alpha;
+          if(material.tex){const tex=material.tex,u=clamp(wa*a.u+wb*b.u+wc*c.u,0,1),v=clamp(wa*a.v+wb*b.v+wc*c.v,0,1),ti=(Math.min(tex.height-1,Math.floor(v*tex.height))*tex.width+Math.min(tex.width-1,Math.floor(u*tex.width)))*4;r=tex.data[ti];g=tex.data[ti+1];bl=tex.data[ti+2];alpha*=tex.data[ti+3]/255;}
+          if(alpha<.003)continue;
+          if(alpha>.998){rasterWords[index]=material.tex?packed(r,g,bl):solid;rasterDepth[index]=z;}
+          else{const old=rasterWords[index],inv=1-alpha;rasterWords[index]=packed(r*alpha+(old&255)*inv,g*alpha+((old>>8)&255)*inv,bl*alpha+((old>>16)&255)*inv);}
+        }
+      }
+    }
+    function rasterFace(f){
+      const vertices=f.p.map((p,i)=>{const q=project(p);return{x:q[0]*rasterRatio,y:q[1]*rasterRatio,z:dot(p,eye),u:f.uv?f.uv[i][0]:0,v:f.uv?f.uv[i][1]:0};});
+      let tex=null;
+      if(f.texture){tex=texturePixels.get(f.texture);if(!tex){tex=f.texture.getContext('2d').getImageData(0,0,f.texture.width,f.texture.height);texturePixels.set(f.texture,tex);}}
+      const material={color:f.fill?colorChannels(f.fill):null,alpha:f.alpha,tex};
+      for(let i=1;i<vertices.length-1;i++)rasterTriangle(vertices[0],vertices[i],vertices[i+1],material);
+    }
+    function rasterLine(f){
+      const rgb=colorChannels(f.stroke),value=packed(...rgb),rw=rasterCanvas.width,rh=rasterCanvas.height;
+      for(let i=0;i<f.p.length-1;i++){
+        const p=project(f.p[i]),q=project(f.p[i+1]),a=p.map(v=>v*rasterRatio),b=q.map(v=>v*rasterRatio),z0=dot(f.p[i],eye),z1=dot(f.p[i+1],eye);
+        const steps=Math.ceil(Math.max(Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1]))*1.3),radius=Math.max(.8,f.width*rasterRatio/2);
+        for(let j=0;j<=steps;j++){const t=steps?j/steps:0,x=a[0]+(b[0]-a[0])*t,y=a[1]+(b[1]-a[1])*t,z=z0+(z1-z0)*t+.015;
+          for(let py=Math.max(0,Math.floor(y-radius));py<=Math.min(rh-1,Math.ceil(y+radius));py++)for(let px=Math.max(0,Math.floor(x-radius));px<=Math.min(rw-1,Math.ceil(x+radius));px++){if((px+.5-x)**2+(py+.5-y)**2>radius**2)continue;const k=py*rw+px;if(z>=rasterDepth[k]-.01){rasterWords[k]=value;rasterDepth[k]=z;}}
+        }
+      }
+    }
+    function paintScene(){
+      const started=performance.now();
+      const rw=Math.round(W*rasterRatio),rh=Math.round(H*rasterRatio);
+      if(rasterCanvas.width!==rw||rasterCanvas.height!==rh){rasterCanvas.width=rw;rasterCanvas.height=rh;rasterImage=rasterContext.createImageData(rw,rh);rasterWords=new Uint32Array(rasterImage.data.buffer);rasterDepth=new Float32Array(rw*rh);}
+      const key=[W,H,rasterRatio,state.view,state.labels,state.values,state.filter,state.light,design.table,design.facets,state.view==='screen'?state.screen:''].join(':');
+      function paintGroup(group){group.filter(f=>!f.stroke&&!f.texture&&f.alpha===1).forEach(rasterFace);group.filter(f=>f.texture).forEach(rasterFace);group.filter(f=>!f.stroke&&!f.texture&&f.alpha<1).sort((a,b)=>a.depth-b.depth).forEach(rasterFace);group.filter(f=>f.stroke).forEach(rasterLine);}
+      if(staticCache&&staticCache.key===key){rasterWords.set(staticCache.words);rasterDepth.set(staticCache.depth);}
+      else{rasterWords.fill(packed(...colorChannels(design.table)));rasterDepth.fill(-Infinity);paintGroup(faces.slice(0,staticFaceCount));staticCache={key,words:new Uint32Array(rasterWords),depth:new Float32Array(rasterDepth)};}
+      paintGroup(faces.slice(staticFaceCount));
+      rasterContext.putImageData(rasterImage,0,0);ctx.drawImage(rasterCanvas,0,0,W,H);
+      // Reduce only the model's raster resolution on slower CPUs; UI labels stay sharp.
+      if(performance.now()-started>180)rasterBudget=650000;
+    }
+    function annotations(){
+      labelBoxes=[];if(!state.labels||state.view==='screen')return;
+      let labels;
+      if(state.view==='optics')labels=[['Фильтр',[810,0,state.filter==='none'?105:243]],['Решётка',[855,0,244]],['Линза',[900,0,244]],['Щель',[955,0,244]]];
+      else labels=[['Экран',[state.screen,0,311]],['Оптика',[855,0,244]],['Источник',[1130,0,257]]];
+      ctx.font='12px Tahoma, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      const widths=labels.map(([text])=>ctx.measureText(text).width+14),gap=12,total=widths.reduce((a,b)=>a+b,0)+gap*(labels.length-1);
+      const center=clamp(labels.reduce((sum,item)=>sum+project(item[1])[0],0)/labels.length-(state.view==='optics'?Math.min(35,W*.035):0),total/2+12,W-total/2-12);
+      let left=center-total/2;
+      labels.forEach(([text,anchor],i)=>{const width=widths[i],x=state.view==='optics'?left+width/2:W*(i+.5)/labels.length;labelBoxes.push({text,anchor:project(anchor),x,y:25,left:x-width/2,right:x+width/2,top:13,bottom:37});left+=width+gap;});
+      ctx.strokeStyle='#6e858b';ctx.lineWidth=.75;
+      for(const item of labelBoxes){const p=item.anchor;if(p[1]<60)continue;ctx.beginPath();ctx.moveTo(item.x,item.bottom+5);ctx.lineTo(item.x,51);ctx.lineTo(p[0],p[1]);ctx.stroke();ctx.fillStyle='#647e83';ctx.fillRect(p[0]-1.5,p[1]-1.5,3,3);}
+      for(const item of labelBoxes){ctx.fillStyle=design.table;ctx.fillRect(item.left,item.top,item.right-item.left,item.bottom-item.top);}
+      ctx.fillStyle='#334c55';for(const item of labelBoxes)ctx.fillText(item.text,item.x,item.y);
+    }
+    function render(){
+      if(renderPending){cancelAnimationFrame(renderPending);renderPending=0;}
+      const rect=canvas.getBoundingClientRect();W=Math.max(280,Math.round(rect.width));H=Math.round(rect.height);const dpr=Math.min(window.devicePixelRatio||1,2);
+      rasterRatio=Math.min(2,Math.sqrt(rasterBudget/(W*H)));
+      const cw=Math.round(W*dpr),ch=Math.round(H*dpr);
+      if(canvas.width!==cw||canvas.height!==ch){canvas.width=cw;canvas.height=ch;}
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      root.style.setProperty('--xp-blue',design.blue);root.style.setProperty('--xp-table',design.table);
+      camera();build();paintScene();ctx.globalAlpha=1;drawPositionGuides();annotations();drawScreenRuler();
+      const s=state.screen,hit=[[s-15,-144,80],[s+130,-144,80],[s+130,144,313],[s-15,144,313]].map(project);
+      hitScreen={minX:Math.min(...hit.map(p=>p[0])),maxX:Math.max(...hit.map(p=>p[0])),minY:Math.min(...hit.map(p=>p[1])),maxY:Math.max(...hit.map(p=>p[1]))};
+      root.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===state.view)));
+      root.querySelector('[data-light]').checked=state.light;root.querySelector('[data-filter]').value=state.filter;root.querySelector('[data-labels]').checked=state.labels;
+      root.querySelector('[data-values]').checked=state.values;
+      root.querySelectorAll('[data-move]').forEach(b=>b.disabled=(Number(b.dataset.move)<0&&s<=100)||(Number(b.dataset.move)>0&&s>=650));
+    }
+    function persist(){
+      const saved={modelContent:{view:state.view,screenMm:state.screen,filter:state.filter,light:state.light},privateContent:{labels:state.labels,values:state.values}};
+      try{
+        if(window.openai&&typeof window.openai.setWidgetState==='function')Promise.resolve(window.openai.setWidgetState(saved)).catch(()=>{});
+        else localStorage.setItem(storageKey,JSON.stringify(saved));
+      }catch(_){} // Restricted local-file storage must never prevent use.
+    }
+    function restore(saved){
+      if(!saved||typeof saved!=='object')return;
+      const m=saved.modelContent||saved,p=saved.privateContent||{};
+      if(views[m.view])state.view=m.view;if(Number.isFinite(m.screenMm))state.screen=clamp(Math.round(m.screenMm),100,650);
+      if(['none','red','green'].includes(m.filter))state.filter=m.filter;if(typeof m.light==='boolean')state.light=m.light;if(typeof p.labels==='boolean')state.labels=p.labels;
+      if(typeof p.values==='boolean')state.values=p.values;
+    }
+    function announce(text){root.querySelector('[data-live]').textContent=text;}
+    function changed(){render();persist();}
+    function queueRender(){if(!renderPending)renderPending=requestAnimationFrame(render);}
+    function clearPointer(){screenRuler=null;tooltip.style.display='none';canvas.style.cursor='default';}
+    root.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{state.view=b.dataset.view;clearPointer();changed();}));
+    root.querySelector('[data-light]').addEventListener('change',e=>{state.light=e.target.checked;changed();announce(state.light?'Источник включён':'Источник выключен');});
+    root.querySelector('[data-filter]').addEventListener('change',e=>{state.filter=e.target.value;changed();announce('Светофильтр: '+e.target.selectedOptions[0].textContent);});
+    root.querySelector('[data-labels]').addEventListener('change',e=>{state.labels=e.target.checked;changed();});
+    root.querySelector('[data-values]').addEventListener('change',e=>{state.values=e.target.checked;clearPointer();changed();});
+    root.querySelectorAll('[data-move]').forEach(b=>b.addEventListener('click',()=>{const next=Number(b.dataset.move)>0?(Math.floor(state.screen/10)+1)*10:(Math.ceil(state.screen/10)-1)*10;state.screen=clamp(next,100,650);clearPointer();changed();announce(`Экран на отметке ${state.screen} миллиметров`);}));
+    function point(e){const r=canvas.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height];}
+    function screenHit(p){return(state.view==='overview'||state.view==='top')&&hitScreen&&p[0]>=hitScreen.minX&&p[0]<=hitScreen.maxX&&p[1]>=hitScreen.minY&&p[1]<=hitScreen.maxY;}
+    function onScreenPlane(p){
+      const x=state.screen-4.8,o=project([x,0,0]),a=project([x,1,0]),b=project([x,0,1]);
+      const ay=a[0]-o[0],az=a[1]-o[1],by=b[0]-o[0],bz=b[1]-o[1],det=ay*bz-az*by;
+      if(Math.abs(det)<.00001)return null;
+      const dx=p[0]-o[0],dy=p[1]-o[1],y=(dx*bz-dy*by)/det,z=(ay*dy-az*dx)/det;
+      return Math.abs(y)<=133&&z>=113&&z<=302?{y,z}:null;
+    }
+    function drawScreenRuler(){
+      const active=state.view==='screen'&&state.values&&screenRuler;
+      canvas.dataset.rulerActive=String(!!active);
+      if(!active){delete canvas.dataset.rulerMm;return;}
+      const x=state.screen-5.2,y=screenRuler.y,value=Math.abs(y),within=value<=110;
+      const a=project([x,y,302]),b=project([x,y,202]),c=project([x,y,173]),d=project([x,y,113]);
+      ctx.save();ctx.strokeStyle='#3b6079b8';ctx.lineWidth=.85;ctx.setLineDash([3,3]);
+      ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.moveTo(...c);ctx.lineTo(...d);ctx.stroke();ctx.setLineDash([]);
+      const rulerZ=screenRuler.z>173&&screenRuler.z<206?214:clamp(screenRuler.z,124,289);
+      const zero=project([x,0,rulerZ]),tip=project([x,y,rulerZ]);
+      ctx.strokeStyle='#446a7dc9';ctx.beginPath();ctx.moveTo(...zero);ctx.lineTo(...tip);
+      for(let mm=0;mm<=value;mm+=10){const yy=Math.sign(y)*mm,t=project([x,yy,rulerZ]);ctx.moveTo(t[0],t[1]-2.5);ctx.lineTo(t[0],t[1]+2.5);}
+      ctx.moveTo(tip[0],tip[1]-4);ctx.lineTo(tip[0],tip[1]+4);ctx.stroke();
+      if(within){
+        const text=`${Math.round(value)} мм`,p=project([x,y,113]);ctx.font='11px Tahoma, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';const tw=ctx.measureText(text).width+12;
+        const tx=clamp(p[0],tw/2+7,W-tw/2-7),ty=Math.min(H-14,p[1]+17);ctx.fillStyle='#ece9d8e8';ctx.fillRect(tx-tw/2,ty-9,tw,18);ctx.fillStyle='#345264';ctx.fillText(text,tx,ty);canvas.dataset.rulerMm=String(Math.round(value));
+      }else delete canvas.dataset.rulerMm;
+      ctx.restore();
+    }
+    function repaintRuler(){ctx.drawImage(rasterCanvas,0,0,W,H);drawScreenRuler();}
+    canvas.addEventListener('pointerdown',e=>{
+      if(drag)return;
+      const p=point(e);if(state.view==='screen'){tooltip.style.display='none';screenRuler=state.values?onScreenPlane(p):null;canvas.style.cursor=screenRuler?'crosshair':'default';repaintRuler();return;}
+      if(e.button!==0||!screenHit(p))return;const a=project([0,0,0]),b=project([1,0,0]);drag={pointer:e.pointerId,p,start:state.screen,dx:b[0]-a[0],dy:b[1]-a[1]};if(canvas.setPointerCapture)canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';
+    });
+    canvas.addEventListener('pointermove',e=>{
+      if(drag&&e.pointerId!==drag.pointer)return;
+      const p=point(e);
+      if(state.view==='screen'){tooltip.style.display='none';screenRuler=state.values?onScreenPlane(p):null;canvas.style.cursor=screenRuler?'crosshair':'default';repaintRuler();return;}
+      if(drag){const denom=drag.dx**2+drag.dy**2;state.screen=clamp(Math.round(drag.start+((p[0]-drag.p[0])*drag.dx+(p[1]-drag.p[1])*drag.dy)/denom),100,650);queueRender();}
+      const hit=screenHit(p)||!!drag;canvas.style.cursor=drag?'grabbing':hit?'grab':'default';tooltip.style.display=hit&&state.values?'block':'none';
+      if(hit&&state.values){tooltip.textContent=`Экран · ${state.screen} мм`;tooltip.style.left=Math.min(p[0]+14,W-135)+'px';tooltip.style.top=Math.min(p[1]+18,H-33)+'px';}
+    });
+    function endDrag(e){if(!drag||e.pointerId!==drag.pointer)return;if(canvas.hasPointerCapture&&canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);drag=null;canvas.style.cursor=state.view==='screen'?'default':'grab';render();persist();announce(`Экран на отметке ${state.screen} миллиметров`);}
+    canvas.addEventListener('pointerup',endDrag);canvas.addEventListener('pointercancel',e=>{endDrag(e);clearPointer();if(state.view==='screen')repaintRuler();});canvas.addEventListener('pointerleave',e=>{if(e.pointerType==='touch'&&state.view==='screen')return;if(!drag){clearPointer();if(state.view==='screen')repaintRuler();}});
+    if(window.openai)restore(window.openai.widgetState);
+    else{try{restore(JSON.parse(localStorage.getItem(storageKey)));}catch(_){}}
+    window.addEventListener('openai:set_globals',e=>{const saved=e.detail&&e.detail.globals&&e.detail.globals.widgetState;if(saved){restore(saved);render();}});
+    render();
+    if(typeof ResizeObserver==='function')new ResizeObserver(queueRender).observe(stage);
+    else window.addEventListener('resize',queueRender);
+    if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:render});tweak.addColorPicker(design,'blue',{label:'Синий заголовок',reference:'--xp-blue'});tweak.addColorPicker(design,'table',{label:'Цвет стола',reference:'--xp-table'});tweak.addSlider(design,'facets',{label:'Количество граней оправ',min:8,max:16,step:4});}
+  })();
+  </script>
+</div>
+
+  </main>
+</body>
+</html>
