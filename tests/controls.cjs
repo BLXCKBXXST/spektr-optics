@@ -1,4 +1,4 @@
-const {launchBrowser, targetUrl, screenshotPath, waitForLayout}=require('../tools/test-browser.cjs');
+const {launchBrowser, targetUrl, screenshotPath, waitForLayout}=require('./helpers/browser.cjs');
 const assert=require('node:assert/strict');
 (async()=>{
   const browser=await launchBrowser();

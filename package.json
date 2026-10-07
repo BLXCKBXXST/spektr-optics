@@ -5,11 +5,11 @@
   "description": "Автономный оптический симулятор «Спектр»; npm нужен только для разработки.",
   "engines": {"node": ">=20"},
   "scripts": {
-    "build": "node tools/export-portable.cjs",
-    "test": "npm run build && npm run test:portable && npm run test:responsive && npm run test:regressions",
-    "test:portable": "node tools/check-portable.cjs",
-    "test:responsive": "node tools/check-responsive-windows.cjs",
-    "test:regressions": "node tests/check-optics-layout.cjs && node tests/check-optics-measurements.cjs && node tests/check-optics-values.cjs"
+    "build": "node scripts/build.cjs",
+    "test": "npm run build && npm run test:offline && npm run test:responsive && npm run test:interaction",
+    "test:offline": "node tests/offline.cjs",
+    "test:responsive": "node tests/responsive.cjs",
+    "test:interaction": "node tests/smoke.cjs && node tests/measurements.cjs && node tests/controls.cjs"
   },
   "devDependencies": {"playwright": "1.62.1"}
 }

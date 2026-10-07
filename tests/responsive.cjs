@@ -1,35 +1,14 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const os = require('node:os');
 const path = require('node:path');
 const {pathToFileURL} = require('node:url');
 
-function loadPlaywright() {
-  const candidates = [
-    process.env.SPEKTR_PLAYWRIGHT_MODULE,
-    'playwright',
-    path.join(os.homedir(), '.cache', 'codex-runtimes', 'codex-primary-runtime', 'dependencies', 'node', 'node_modules', 'playwright')
-  ].filter(Boolean);
-  for (const candidate of candidates) {
-    try {return require(candidate);} catch (error) {if (error.code !== 'MODULE_NOT_FOUND') throw error;}
-  }
-  throw new Error('Playwright is needed only for development tests. Install it or set SPEKTR_PLAYWRIGHT_MODULE; the simulator itself has no dependencies.');
-}
-
-const playwright = loadPlaywright();
-const engineName = process.env.SPEKTR_BROWSER || 'chromium';
-const engine = playwright[engineName];
-assert.ok(engine && typeof engine.launch === 'function', `Unsupported browser: ${engineName}`);
-const target = path.resolve(process.argv[2] || path.join(__dirname, '..', 'portable', 'spektr.html'));
-const output = path.resolve(process.env.SPEKTR_TEST_OUTPUT || path.join(__dirname, 'test-output'));
+const {engineName, launchBrowser, waitForLayout, target: defaultTarget, output} = require('./helpers/browser.cjs');
+const target = path.resolve(process.argv[2] || defaultTarget);
 const url = pathToFileURL(target).href;
 const profiles = [[320, 568], [375, 812], [736, 768], [1280, 800], [1920, 1080], [812, 375]];
 const controls = '[data-view], [data-labels], [data-values], [data-light], [data-filter], [data-move]';
 const report = {file: target, browser: engineName, profiles: [], resize: null};
-
-async function waitForLayout(page) {
-  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-}
 
 async function assertRendered(canvas) {
   const image = await canvas.evaluate(c => {
@@ -109,9 +88,7 @@ async function stateSnapshot(page) {
 (async () => {
   assert.ok(fs.existsSync(target), `Build the standalone file first: ${target}`);
   fs.mkdirSync(output, {recursive: true});
-  const executablePath = process.env.SPEKTR_BROWSER_EXECUTABLE || process.env.SPEKTR_CHROMIUM_EXECUTABLE ||
-    (!fs.existsSync(engine.executablePath()) && engineName === 'chromium' && fs.existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined);
-  const browser = await engine.launch({headless: true, ...(executablePath ? {executablePath} : {}), ...(engineName === 'chromium' ? {args: ['--no-sandbox', '--disable-webgl', '--disable-webgl2']} : {})});
+  const browser = await launchBrowser({args: ['--disable-webgl', '--disable-webgl2']});
   try {
     const context = await browser.newContext({offline: true, deviceScaleFactor: 1, viewport: {width: 1280, height: 800}});
     const page = await context.newPage();

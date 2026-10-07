@@ -2,9 +2,9 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const {pathToFileURL} = require('node:url');
-const {playwright: {firefox, webkit}, engineName, launchBrowser, waitForLayout} = require('./test-browser.cjs');
+const {playwright: {firefox, webkit}, engineName, launchBrowser, waitForLayout, target: defaultTarget} = require('./helpers/browser.cjs');
 
-const target = path.resolve(process.argv[2] || path.join(__dirname, '..', 'portable', 'spektr.html'));
+const target = path.resolve(process.argv[2] || defaultTarget);
 const url = pathToFileURL(target).href;
 const report = {file: target, profiles: [], unavailableEngines: []};
 

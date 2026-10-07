@@ -17,8 +17,8 @@ const playwright = loadPlaywright();
 const engineName = process.env.SPEKTR_BROWSER || 'chromium';
 const engine = playwright[engineName];
 if (!engine || typeof engine.launch !== 'function') throw new Error(`Unsupported browser: ${engineName}`);
-const target = path.resolve(process.env.SPEKTR_TEST_FILE || path.join(__dirname, '../portable/spektr.html'));
-const output = path.resolve(process.env.SPEKTR_TEST_OUTPUT || path.join(__dirname, '../tests/test-output'));
+const target = path.resolve(process.env.SPEKTR_TEST_FILE || path.join(__dirname, '../../dist/spektr.html'));
+const output = path.resolve(process.env.SPEKTR_TEST_OUTPUT || path.join(__dirname, '../../test-results'));
 
 async function launchBrowser({args = [], ...options} = {}) {
   const executablePath = process.env.SPEKTR_BROWSER_EXECUTABLE || process.env.SPEKTR_CHROMIUM_EXECUTABLE ||
