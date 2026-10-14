@@ -7,7 +7,7 @@ const {engineName, launchBrowser, waitForLayout, target: defaultTarget, output} 
 const target = path.resolve(process.argv[2] || defaultTarget);
 const url = pathToFileURL(target).href;
 const profiles = [[320, 568], [375, 812], [736, 768], [1280, 800], [1920, 1080], [812, 375]];
-const controls = '[data-view], [data-labels], [data-values], [data-light], [data-filter], [data-move]';
+const controls = '[data-view], [data-labels], [data-values], [data-light], [data-filter], [data-move], [data-zoom], [data-zoom-reset], [data-aperture]';
 const report = {file: target, browser: engineName, profiles: [], resize: null};
 
 async function assertRendered(canvas) {
@@ -33,8 +33,8 @@ async function inspectLayout(page) {
     const canvas = document.querySelector('#optics-xp-sketch canvas');
     return {
       document: {width: document.documentElement.clientWidth, scrollWidth: document.documentElement.scrollWidth, height: innerHeight, scrollHeight: document.documentElement.scrollHeight},
-      scene: scene && rect(scene), panel: panel && rect(panel), canvas: rect(canvas),
-      controls: [...document.querySelectorAll(selector)].map(element => ({
+      scene: scene && rect(scene), panel: panel && rect(panel), canvas: rect(canvas), view: canvas.dataset.cameraView,
+      controls: [...document.querySelectorAll(selector)].filter(element => element.getClientRects().length > 0).map(element => ({
         name: element.dataset.view || element.dataset.move || Object.keys(element.dataset).join(','),
         rect: rect(element.matches('input[type="checkbox"]') ? element.closest('label') : element),
         inPanel: panel?.contains(element) || false,
@@ -52,7 +52,7 @@ function overlaps(a, b) {
 
 function verifyLayout(layout, name) {
   assert.ok(layout.scene && layout.panel, `${name}: two separate XP window sections`);
-  assert.equal(layout.controls.length, 10, `${name}: all ten controls are present`);
+  assert.equal(layout.controls.length, layout.view === 'grating' ? 15 : 14, `${name}: every relevant control is visible`);
   assert.ok(layout.panel.top >= layout.scene.bottom - 1, `${name}: control window is underneath the scene window`);
   assert.ok(layout.canvas.width > layout.document.width * .82, `${name}: scene uses available window width`);
   assert.ok(layout.canvas.left >= layout.scene.left && layout.canvas.right <= layout.scene.right + 1, `${name}: scene does not spill out of its window`);
@@ -102,7 +102,7 @@ async function stateSnapshot(page) {
       const name = `${width}x${height}`;
       await page.setViewportSize({width, height});
       await waitForLayout(page);
-      for (const view of ['overview', 'top', 'optics', 'screen']) {
+      for (const view of ['overview', 'top', 'optics', 'grating', 'screen']) {
         await page.locator(`[data-view="${view}"]`).click();
         await waitForLayout(page);
         await assertRendered(canvas);
@@ -121,7 +121,7 @@ async function stateSnapshot(page) {
         await checkbox.setChecked(!before);
         await checkbox.setChecked(before);
       }
-      await page.locator('[data-filter]').selectOption('green');
+      await page.locator('[data-filter]').selectOption('blue');
       await page.locator('[data-filter]').selectOption('none');
       await page.locator('[data-move="10"]').click();
       await page.locator('[data-move="-10"]').click();

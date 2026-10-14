@@ -67,22 +67,22 @@ function finishProfile(profile, name, extra = {}) {
     const desktop = await openProfile(browser);
     const {page, canvas} = desktop;
     const viewImages = [];
-    for (const view of ['overview', 'top', 'optics', 'screen']) {
+    for (const view of ['overview', 'top', 'optics', 'grating', 'screen']) {
       await page.locator(`[data-view="${view}"]`).click();
       await assertRendered(canvas);
       assert.equal(await page.locator(`[data-view="${view}"]`).getAttribute('aria-pressed'), 'true');
       viewImages.push(await canvas.evaluate(c => c.toDataURL()));
     }
-    assert.equal(new Set(viewImages).size, 4, 'All four views are different');
+    assert.equal(new Set(viewImages).size, 5, 'All five views are different');
     const lit = viewImages.at(-1);
     await page.locator('[data-light]').uncheck();
     assert.notEqual(await canvas.evaluate(c => c.toDataURL()), lit, 'Light changes the screen image');
     await page.locator('[data-light]').check();
-    await page.locator('[data-filter]').selectOption('green');
-    const green = await canvas.evaluate(c => c.toDataURL());
-    assert.notEqual(green, lit, 'Green filter changes the image');
+    await page.locator('[data-filter]').selectOption('blue');
+    const blue = await canvas.evaluate(c => c.toDataURL());
+    assert.notEqual(blue, lit, 'Blue filter changes the image');
     await page.locator('[data-filter]').selectOption('red');
-    assert.notEqual(await canvas.evaluate(c => c.toDataURL()), green, 'Red and green filters differ');
+    assert.notEqual(await canvas.evaluate(c => c.toDataURL()), blue, 'Red and blue filters differ');
 
     for (const [start, move, expected] of [[303, 10, 310], [303, -10, 300], [310, 10, 320], [310, -10, 300], [649, 10, 650], [101, -10, 100]]) {
       await restore(page, 'top', start);
@@ -124,13 +124,13 @@ function finishProfile(profile, name, extra = {}) {
 
     await restore(page, 'screen', 383, true, true);
     await page.locator('[data-move="10"]').click();
-    await page.locator('[data-filter]').selectOption('green');
+    await page.locator('[data-filter]').selectOption('blue');
     await page.locator('[data-light]').uncheck();
     await page.locator('[data-labels]').uncheck();
     await page.locator('[data-values]').uncheck();
     await page.reload();
     assert.equal(await page.locator('[data-view="screen"]').getAttribute('aria-pressed'), 'true', 'View persists without a host application');
-    assert.equal(await page.locator('[data-filter]').inputValue(), 'green');
+    assert.equal(await page.locator('[data-filter]').inputValue(), 'blue');
     for (const selector of ['[data-light]', '[data-labels]', '[data-values]']) assert.equal(await page.locator(selector).isChecked(), false, `${selector} persists`);
     await page.locator('[data-move="10"]').click();
     assert.equal(await livePosition(page), 400, 'Screen coordinate persists across reopening');
@@ -138,14 +138,14 @@ function finishProfile(profile, name, extra = {}) {
     for (const width of [320, 375, 736, 1280]) {
       await page.setViewportSize({width, height: 900});
       await waitForLayout(page);
-      for (const view of ['overview', 'top', 'optics', 'screen']) {
+      for (const view of ['overview', 'top', 'optics', 'grating', 'screen']) {
         await page.locator(`[data-view="${view}"]`).click();
         await assertRendered(canvas);
         const size = await page.evaluate(() => ({scroll: document.documentElement.scrollWidth, width: document.documentElement.clientWidth}));
         assert.ok(size.scroll <= size.width + 1, `${view} has no horizontal overflow at ${width}: ${JSON.stringify(size)}`);
       }
     }
-    finishProfile(desktop, 'Offline desktop, software canvas', {views: 4, viewportWidths: [320, 375, 736, 1280], persistence: true, arrowSnapMm: 10, dragStepMm: 1});
+    finishProfile(desktop, 'Offline desktop, software canvas', {views: 5, viewportWidths: [320, 375, 736, 1280], persistence: true, arrowSnapMm: 10, dragStepMm: 1});
     await desktop.context.close();
 
     const fallback = await openProfile(browser, {}, true);

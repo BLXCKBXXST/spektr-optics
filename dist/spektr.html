@@ -46,6 +46,15 @@
     #optics-xp-sketch .xp-screen-control span{min-width:52px;text-align:center}
     #optics-xp-sketch .xp-screen-control button{padding:0 10px;min-width:46px;min-height:38px;font-size:25px;line-height:1;color:#315783;border-color:#6d86a3}
     #optics-xp-sketch .xp-screen-control button:disabled{color:#929c9f;border-color:#adb1ad;opacity:.65}
+    #optics-xp-sketch [hidden]{display:none!important}
+    #optics-xp-sketch .xp-zoom{display:flex;align-items:center;gap:4px}
+    #optics-xp-sketch .xp-zoom button{min-width:33px;padding:4px 7px}
+    #optics-xp-sketch .xp-zoom [data-zoom-reset]{min-width:58px;font-variant-numeric:tabular-nums}
+    #optics-xp-sketch .xp-aperture-control{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:0 12px 12px}
+    #optics-xp-sketch .xp-aperture-control label{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    #optics-xp-sketch .xp-aperture-control input{width:140px;max-width:100%;min-height:28px}
+    #optics-xp-sketch .xp-aperture-control output{min-width:45px;font-variant-numeric:tabular-nums}
+    #optics-xp-sketch .xp-note{font-size:11px;color:#5a666c}
     #optics-xp-sketch .xp-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
     @media(max-width:620px){#optics-xp-sketch .xp-stage{height:290px;margin:7px}#optics-xp-sketch .xp-title{padding:6px 9px}#optics-xp-sketch .xp-toolbar{gap:8px;padding:8px}#optics-xp-sketch button{padding:5px 8px}#optics-xp-sketch .xp-controls{gap:11px;padding:10px}#optics-xp-sketch .xp-toggles{margin-left:0;gap:5px 12px}#optics-xp-sketch .xp-screen-control{margin-left:auto}}
     @media(pointer:coarse){#optics-xp-sketch button,#optics-xp-sketch select{min-height:44px}#optics-xp-sketch .xp-label-toggle{min-height:44px}#optics-xp-sketch select{font-size:16px}}
@@ -64,7 +73,8 @@
       <div class="xp-view-group" role="group" aria-label="Ракурс установки">
         <button type="button" class="cursor-interaction" data-view="overview" aria-pressed="true">Общий вид</button>
         <button type="button" class="cursor-interaction" data-view="top" aria-pressed="false">Сверху</button>
-        <button type="button" class="cursor-interaction" data-view="optics" aria-pressed="false">Оптика</button>
+        <button type="button" class="cursor-interaction" data-view="optics" aria-pressed="false">Линза и щель</button>
+        <button type="button" class="cursor-interaction" data-view="grating" aria-pressed="false">Решётка</button>
         <button type="button" class="cursor-interaction" data-view="screen" aria-pressed="false">Экран</button>
       </div>
       <div class="xp-toggles" role="group" aria-label="Отображение и свет">
@@ -74,11 +84,303 @@
       </div>
     </div>
     <div class="xp-controls">
-      <label class="xp-filter">Фильтр <select data-filter aria-label="Светофильтр"><option value="none">Без фильтра</option><option value="green">Зелёный</option><option value="red">Красный</option></select></label>
+      <label class="xp-filter">Фильтр <select data-filter aria-label="Светофильтр"><option value="none">Без фильтра</option><option value="blue">Синий</option><option value="red">Красный</option></select></label>
+      <div class="xp-zoom" role="group" aria-label="Масштаб вида"><button type="button" data-zoom="-1" aria-label="Уменьшить вид">−</button><button type="button" data-zoom-reset aria-label="Сбросить масштаб и положение вида" title="Вернуть весь вид">100%</button><button type="button" data-zoom="1" aria-label="Увеличить вид">+</button></div>
       <div class="xp-screen-control" role="group" aria-label="Положение экрана"><button type="button" class="cursor-interaction" data-move="-10" aria-label="Экран: предыдущая отметка 10 мм">←</button><span>Экран</span><button type="button" class="cursor-interaction" data-move="10" aria-label="Экран: следующая отметка 10 мм">→</button></div>
+    </div>
+    <div class="xp-aperture-control" hidden>
+      <label>Диаметр отверстия <input type="range" min="2" max="20" step="0.5" value="18" data-aperture aria-label="Диаметр рабочего отверстия решётки"><output data-aperture-value>18 мм</output></label>
+      <span class="xp-note">Пределы регулировки пока приблизительные.</span>
     </div>
     <span class="xp-sr" data-live aria-live="polite"></span>
   </section>
+  <script>
+/*
+ * One horizontal light profile shared by every view of the screen.
+ * Positions use d sin(theta) = m lambda and y = D tan(theta), normal incidence:
+ * https://www.newport.com.cn/n/the-grating-equation
+ *
+ * The source spectrum, filter passbands, order efficiencies and source blur are
+ * provisional display approximations, not measurements of the real equipment.
+ * A Gaussian approximates a far-field central lobe (FWHM about 1.03 lambda D /
+ * diameter). This is an effective linewidth, not a full Fresnel propagation or
+ * lens model, and does not reproduce Airy rings or aperture-edge fringes.
+ */
+const SpektrSpectrum = (() => {
+  'use strict';
+
+  const GRATING_PERIOD_MM = 0.01;
+  const MIN_APERTURE_MM = 2;
+  const MAX_APERTURE_MM = 20;
+  const DEFAULT_APERTURE_MM = 18;
+  const MIN_WAVELENGTH_NM = 380;
+  const MAX_WAVELENGTH_NM = 740;
+  const SOURCE_SIGMA_MM = 0.3;
+  const SQRT_TWO_PI = Math.sqrt(2 * Math.PI);
+  const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
+  const finite = (value, fallback) => Number.isFinite(value) ? value : fallback;
+  const smooth = value => {
+    const t = clamp(value, 0, 1);
+    return t * t * (3 - 2 * t);
+  };
+
+  function wavelengthRgb(wavelengthNm) {
+    const w = wavelengthNm;
+    let r = 0, g = 0, b = 0;
+    if (w < 440) { r = 1 - smooth((w - 380) / 60); b = 1; }
+    else if (w < 490) { g = smooth((w - 440) / 50); b = 1; }
+    else if (w < 510) { g = 1; b = 1 - smooth((w - 490) / 20); }
+    else if (w < 580) { r = smooth((w - 510) / 70); g = 1; }
+    else if (w < 645) { r = 1; g = 1 - smooth((w - 580) / 65); }
+    else { r = 1; }
+    const visible = smooth((w - 380) / 40) * (1 - smooth((w - 685) / 55));
+    // The colour ramps describe display primaries; decode them before adding
+    // light. Otherwise the blue-green transition becomes an overly pale cyan.
+    return [r ** 2.2 * visible, g ** 2.2 * visible, b ** 2.2 * visible];
+  }
+
+  function transmission(wavelengthNm, filter) {
+    if (filter === 'red') return Math.exp(-0.5 * ((wavelengthNm - 650) / 22) ** 2);
+    if (filter === 'blue') return Math.exp(-0.5 * ((wavelengthNm - 465) / 21) ** 2);
+    return 1;
+  }
+
+  function orderPositionMm(wavelengthNm, order, distanceMm) {
+    const sine = order * wavelengthNm * 1e-6 / GRATING_PERIOD_MM;
+    if (!Number.isFinite(sine) || !Number.isFinite(distanceMm) || Math.abs(sine) >= 1) return null;
+    return distanceMm * sine / Math.sqrt(1 - sine * sine);
+  }
+
+  function blurSigmaMm(wavelengthNm, distanceMm, apertureMm) {
+    const aperture = clamp(finite(apertureMm, DEFAULT_APERTURE_MM), MIN_APERTURE_MM, MAX_APERTURE_MM);
+    const diffractionSigma = 0.437 * wavelengthNm * 1e-6 * Math.max(0, distanceMm) / aperture;
+    return Math.hypot(SOURCE_SIGMA_MM, diffractionSigma);
+  }
+
+  // All wavelengths, including those forming the zero order, pass through the
+  // same filter. Never recolour the zero order independently of the spectrum.
+  const wavelengths = [];
+  let sourceWeight = 0;
+  for (let w = MIN_WAVELENGTH_NM; w <= MAX_WAVELENGTH_NM; w += 1) {
+    const source = 0.65 + 0.35 * (w - MIN_WAVELENGTH_NM) / (MAX_WAVELENGTH_NM - MIN_WAVELENGTH_NM);
+    wavelengths.push({ wavelength: w, rgb: wavelengthRgb(w), source });
+    sourceWeight += source;
+  }
+
+  function profile(options = {}) {
+    const distanceMm = clamp(finite(options.distanceMm, 605), 1, 5000);
+    const apertureMm = clamp(finite(options.apertureMm, DEFAULT_APERTURE_MM), MIN_APERTURE_MM, MAX_APERTURE_MM);
+    const filter = options.filter === 'red' || options.filter === 'blue' ? options.filter : 'none';
+    const widthMm = clamp(finite(options.widthMm, 270), 1, 2000);
+    const samples = clamp(Math.round(finite(options.samples, 1080)), 2, 8192);
+    const stepMm = widthMm / samples;
+    const rgb = new Float32Array(samples * 3);
+    const intensity = new Float32Array(samples);
+    const orders = new Set();
+    const result = { rgb, intensity, samples, widthMm, stepMm, distanceMm, apertureMm, filter, orders: [] };
+    if (options.light === false) return result;
+
+    const halfWidth = widthMm / 2;
+    const area = (apertureMm / DEFAULT_APERTURE_MM) ** 2;
+    // Brightness stays on one common scale: do not normalize each frame by its
+    // brightest pixel, because that would hide the aperture/filter attenuation.
+    const flux = 14 * area / sourceWeight;
+    const visibleSine = (halfWidth + 8) / Math.hypot(distanceMm, halfWidth + 8);
+    const maxOrder = Math.min(
+      Math.floor(GRATING_PERIOD_MM / (MIN_WAVELENGTH_NM * 1e-6)),
+      Math.ceil(visibleSine * GRATING_PERIOD_MM / (MIN_WAVELENGTH_NM * 1e-6))
+    );
+
+    function addLine(position, sigma, colour, weight) {
+      // Include one pixel's integration width; a subpixel line must not flicker
+      // or disappear when the screen moves between two sampled coordinates.
+      const sampledSigma = Math.hypot(sigma, stepMm / Math.sqrt(12));
+      const extent = sampledSigma * 4.5;
+      if (position - extent > halfWidth || position + extent < -halfWidth) return false;
+      const first = Math.max(0, Math.floor((position - extent + halfWidth) / stepMm));
+      const last = Math.min(samples - 1, Math.ceil((position + extent + halfWidth) / stepMm));
+      const density = weight / (SQRT_TWO_PI * sampledSigma);
+      for (let i = first; i <= last; i++) {
+        const coordinate = (i + 0.5) * stepMm - halfWidth;
+        const light = density * Math.exp(-0.5 * ((coordinate - position) / sampledSigma) ** 2);
+        const base = i * 3;
+        rgb[base] += light * colour[0];
+        rgb[base + 1] += light * colour[1];
+        rgb[base + 2] += light * colour[2];
+        intensity[i] += light;
+      }
+      return true;
+    }
+
+    for (const { wavelength, rgb: colour, source } of wavelengths) {
+      const weight = flux * source * transmission(wavelength, filter);
+      if (weight < 1e-9 || colour[0] + colour[1] + colour[2] < 1e-6) continue;
+      const sigma = blurSigmaMm(wavelength, distanceMm, apertureMm);
+      if (addLine(0, sigma, colour, weight)) orders.add(0);
+      for (let m = 1; m <= maxOrder; m++) {
+        const position = orderPositionMm(wavelength, m, distanceMm);
+        if (position === null) break;
+        const efficiency = 1 / (1 + (m / 1.1) ** 2);
+        // At oblique angles the diffraction peak is stretched across the flat
+        // screen. The finite-aperture term alone receives that projection.
+        const cosine = distanceMm / Math.hypot(distanceMm, position);
+        const diffractionSigma = 0.437 * wavelength * 1e-6 * distanceMm / apertureMm / cosine ** 3;
+        const orderSigma = Math.hypot(SOURCE_SIGMA_MM, diffractionSigma);
+        if (addLine(position, orderSigma, colour, weight * efficiency)) orders.add(m);
+        if (addLine(-position, orderSigma, colour, weight * efficiency)) orders.add(-m);
+      }
+    }
+    result.orders = [...orders].sort((a, b) => a - b);
+    return result;
+  }
+
+  function toDisplay(linearValue, exposure = 2.4) {
+    const light = Math.max(0, finite(linearValue, 0));
+    const mapped = 1 - Math.exp(-light * Math.max(0, finite(exposure, 2.4)));
+    // Standard sRGB transfer after a smooth exposure curve, without hard RGB
+    // clipping that would wash overlapping orders into rectangular white bands.
+    const srgb = mapped <= 0.0031308 ? 12.92 * mapped : 1.055 * mapped ** (1 / 2.4) - 0.055;
+    return clamp(Math.round(255 * srgb), 0, 255);
+  }
+
+  function displayRgb(red, green, blue, exposure = 2.4) {
+    const channels = [red, green, blue].map(value => Math.max(0, finite(value, 0)));
+    const peak = Math.max(...channels);
+    if (peak === 0) return [0, 0, 0];
+    const scale = (1 - Math.exp(-peak * Math.max(0, finite(exposure, 2.4)))) / peak;
+    // One exposure curve for the whole colour preserves the filter hue and the
+    // warm unfiltered centre, instead of clipping each primary independently.
+    return channels.map(value => {
+      const linear = value * scale;
+      const srgb = linear <= 0.0031308 ? 12.92 * linear : 1.055 * linear ** (1 / 2.4) - 0.055;
+      return clamp(Math.round(255 * srgb), 0, 255);
+    });
+  }
+
+  return Object.freeze({ profile, toDisplay, displayRgb, transmission, orderPositionMm, blurSigmaMm,
+    GRATING_PERIOD_MM, MIN_APERTURE_MM, MAX_APERTURE_MM, DEFAULT_APERTURE_MM });
+})();
+
+if (typeof module !== 'undefined' && module.exports) module.exports = SpektrSpectrum;
+
+// Window actions affect the layout only; simulator settings are left untouched.
+function setupSpektrWindows(root, onLayout = () => {}) {
+  const style = document.createElement('style');
+  style.textContent = `
+    #optics-xp-sketch .xp-title > span:first-child{flex:1;min-width:0;overflow-wrap:anywhere}
+    #optics-xp-sketch .xp-window-actions{display:flex;flex:none;gap:3px;margin-left:auto}
+    #optics-xp-sketch .xp-window-actions button{display:grid;place-items:center;width:28px;min-width:28px;min-height:28px;padding:0;border:1px solid #e4edfa;border-radius:3px;background:linear-gradient(#91b6e9,#4d78b7);box-shadow:inset 1px 1px #cbdcf3;color:#fff;font:bold 21px/1 Tahoma,sans-serif;text-shadow:1px 1px #355684}
+    #optics-xp-sketch .xp-window-actions button:hover{background:linear-gradient(#b0caf0,#628dca)}
+    #optics-xp-sketch .xp-window-actions button:focus-visible{outline:2px solid #fff3b2;outline-offset:1px}
+    #optics-xp-sketch .xp-window-actions [data-window-action="close"]{background:linear-gradient(#e7a594,#b86051)}
+    #optics-xp-sketch .xp-window-actions [data-window-action="close"]:hover{background:linear-gradient(#f0b9a8,#c77969)}
+    #optics-xp-sketch .xp-window.is-minimized{min-height:0}
+    #optics-xp-sketch .xp-window.is-minimized > :not(.xp-title){display:none}
+    #optics-xp-sketch.xp-scene-minimized{height:auto;grid-template-rows:auto auto;align-content:start}
+    #optics-xp-sketch.xp-window-expanded{height:auto;grid-template-rows:auto auto;align-content:start}
+    #optics-xp-sketch .xp-window.is-expanded:not(.is-minimized){min-height:calc(100vh - 2 * var(--page-padding,12px));min-height:calc(100dvh - 2 * var(--page-padding,12px))}
+    #optics-xp-sketch .xp-control-window.is-expanded:not(.is-minimized){display:flex;flex-direction:column}
+    #optics-xp-sketch .xp-control-window.is-expanded:not(.is-minimized) .xp-toolbar{flex:1;align-content:center}
+    #optics-xp-sketch .xp-window-toast{position:fixed;right:12px;bottom:12px;z-index:10;max-width:calc(100vw - 24px);padding:9px 12px;border:1px solid #9c967f;border-radius:3px;background:#fff9dd;box-shadow:0 2px 7px #26384d25;color:#24323c;pointer-events:none}
+    #optics-xp-sketch .xp-window-toast[hidden]{display:none}
+    @media(pointer:coarse){#optics-xp-sketch .xp-window-actions button{width:44px;min-width:44px;min-height:44px}}
+  `;
+  root.append(style);
+
+  const toast = document.createElement('div');
+  toast.className = 'xp-window-toast';
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
+  toast.hidden = true;
+  root.append(toast);
+
+  let toastTimer = 0;
+  let layoutFrame = 0;
+  const windows = [];
+  const listeners = [];
+
+  function refreshLayout() {
+    const scene = root.querySelector('.xp-scene-window');
+    root.classList.toggle('xp-scene-minimized', scene.classList.contains('is-minimized'));
+    root.classList.toggle('xp-window-expanded', windows.some(item =>
+      item.element.classList.contains('is-expanded') && !item.element.classList.contains('is-minimized')));
+    for (const item of windows) {
+      const minimized = item.element.classList.contains('is-minimized');
+      const expanded = item.element.classList.contains('is-expanded');
+      item.minimize.setAttribute('aria-expanded', String(!minimized));
+      item.minimize.setAttribute('aria-label', `${minimized ? 'Восстановить' : 'Свернуть'} ${item.name}`);
+      item.minimize.title = item.minimize.getAttribute('aria-label');
+      item.maximize.setAttribute('aria-pressed', String(expanded && !minimized));
+      item.maximize.setAttribute('aria-label', `${expanded && !minimized ? 'Вернуть обычный размер:' : 'Развернуть'} ${item.name}`);
+      item.maximize.title = item.maximize.getAttribute('aria-label');
+      item.maximize.firstChild.textContent = expanded && !minimized ? '❐' : '□';
+    }
+    cancelAnimationFrame(layoutFrame);
+    layoutFrame = requestAnimationFrame(() => { layoutFrame = 0; onLayout(); });
+  }
+
+  for (const element of root.querySelectorAll('.xp-scene-window, .xp-control-window')) {
+    const title = element.querySelector('.xp-title');
+    const name = element.classList.contains('xp-scene-window') ? 'окно установки' : 'окно управления';
+    const actions = document.createElement('div');
+    actions.className = 'xp-window-actions';
+    actions.setAttribute('role', 'group');
+    actions.setAttribute('aria-label', `Кнопки окна: ${name}`);
+
+    function addButton(action, icon, label, handler) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.windowAction = action;
+      button.setAttribute('aria-label', label);
+      button.title = label;
+      const symbol = document.createElement('span');
+      symbol.setAttribute('aria-hidden', 'true');
+      symbol.textContent = icon;
+      button.append(symbol);
+      button.addEventListener('click', handler);
+      listeners.push(() => button.removeEventListener('click', handler));
+      actions.append(button);
+      return button;
+    }
+
+    const minimize = addButton('minimize', '−', `Свернуть ${name}`, () => {
+      element.classList.toggle('is-minimized');
+      refreshLayout();
+    });
+    const maximize = addButton('maximize', '□', `Развернуть ${name}`, () => {
+      const shouldExpand = element.classList.contains('is-minimized') || !element.classList.contains('is-expanded');
+      for (const item of windows) item.element.classList.remove('is-expanded');
+      element.classList.remove('is-minimized');
+      element.classList.toggle('is-expanded', shouldExpand);
+      refreshLayout();
+    });
+    addButton('close', '×', 'Закрыть лабораторию (в шутку)', () => {
+      clearTimeout(toastTimer);
+      toast.hidden = false;
+      toast.textContent = 'Лаборатория остаётся открытой.';
+      toastTimer = setTimeout(() => { toast.hidden = true; toast.textContent = ''; toastTimer = 0; }, 2600);
+    });
+    title.append(actions);
+    windows.push({element, name, actions, minimize, maximize});
+  }
+  refreshLayout();
+
+  return function cleanup() {
+    clearTimeout(toastTimer);
+    cancelAnimationFrame(layoutFrame);
+    listeners.forEach(remove => remove());
+    for (const item of windows) {
+      item.element.classList.remove('is-minimized', 'is-expanded');
+      item.actions.remove();
+    }
+    root.classList.remove('xp-scene-minimized', 'xp-window-expanded');
+    toast.remove();
+    style.remove();
+    onLayout();
+  };
+}
+
+</script>
   <script>
   (() => {
     const root = document.getElementById('optics-xp-sketch');
@@ -87,16 +389,18 @@
     if (!ctx) { const message=document.createElement('p');message.setAttribute('role','alert');message.textContent='Для «Спектра» нужен браузер с поддержкой Canvas 2D и JavaScript.';canvas.replaceWith(message);return; }
     const stage = root.querySelector('.xp-stage');
     const tooltip = root.querySelector('.xp-hover');
-    const state = { view: 'overview', screen: 250, light: true, filter: 'none', labels: true, values: true };
+    const state = { view: 'overview', screen: 250, light: true, filter: 'none', labels: true, values: true, aperture: 18, zoom: 1, panX: 0, panY: 0 };
     const design = { blue: '#466faf', table: '#b9ccd0', facets: 12 };
     const views = {
       overview: { az: -116, el: 24, bounds: [[-10,-155,-8],[1270,155,325]], caption: 'Оптическая скамья' },
       top: { az: -90, el: 90, bounds: [[-10,-165,-8],[1270,165,325]], caption: 'Вид сверху · координаты в мм' },
-      optics: { az: -133, el: 21, bounds: [[765,-138,0],[1270,112,280]], caption: 'Общий блок и отдельная щель · координаты в мм' },
+      optics: { az: -133, el: 21, bounds: [[765,-138,0],[1270,112,280]], caption: 'Линза и щель' },
+      grating: { az: -180, el: 0, bounds: [[843,-57,132],[867,57,256]], caption: 'Рабочее отверстие решётки' },
       screen: { az: -180, el: 3, bounds: [[244,-153,65],[262,153,326]], caption: 'Экран · шкала с центральным нулём' }
     };
     let W = 900, H = 470, faces = [], scale = 1, ox = 0, oy = 0, right, up, eye;
     let hitScreen = null, drag = null, screenRuler = null, positionGuides = [];
+    const pointers = new Map();let pinch = null;
     const rasterCanvas = document.createElement('canvas');
     const rasterContext = rasterCanvas.getContext('2d');
     let rasterImage, rasterDepth, rasterWords, rasterRatio = 2, labelBoxes = [];
@@ -105,6 +409,7 @@
     let staticFaceCount=0, staticCache=null;
     const texturePixels = new WeakMap();
     let railTexture = null, screenTexture = null, screenTextureKey = '';
+    let lightStrip = null, lightStripKey = '';
     const rad = x => x * Math.PI / 180;
     const dot = (a,b) => a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
     const sub = (a,b) => a.map((v,i)=>v-b[i]);
@@ -141,42 +446,54 @@
     function base(x0,x1,individual=false){const edge=individual?37:33;box(x0,x1,-edge,33,45,82,'#c9c7b9');screw(x0+10,-20,82);screw(x1-10,20,82);box(x0+3,x1-3,-edge-4,-edge,49,76,individual?'#8d9a93':'#989d96');}
     function holder(x,type){
       cylinderZ(x,0,82,144,14,'#c5c5b8',8);cylinderZ(x,0,140,153,8,'#989f9b',8);box(x-15,x+15,-34,34,143,153,'#bfc2b6');
-      const glass=type==='lens'?'#adc7c8':type==='grating'?'#b3c3bc':type==='red'?'#a75243':type==='green'?'#65966b':null;
-      const face=ring(x,0,195,48,31,17,'#ddd9c9',design.facets,glass);
+      const glass=type==='lens'?'#adc7c8':type==='grating'?'#b3c3bc':type==='red'?'#a75243':type==='blue'?'#526faa':null;
+      let face=ring(x,0,195,48,type==='grating'?35:31,17,'#ddd9c9',design.facets,type==='grating'?null:glass);
+      if(type==='grating'){
+        // A fixed carrier around a variable clear aperture; its mechanism is not known from the photo.
+        face=ring(face+.4,0,195,35,12,.8,'#b8bab0',design.facets);
+        for(const y of[-25,25])ring(face-1,y,190,4.5,0,4.5,'#deded2',8);
+        face=ring(face+.2,0,195,12,state.aperture/2,.5,'#67736c',24,'#b8c9c6');
+      }
       if(type==='slit'){
         const disc=Array.from({length:design.facets},(_,i)=>{const a=i*2*Math.PI/design.facets;return[face,30.7*Math.cos(a),195+30.7*Math.sin(a)];});
         poly(disc,'#485454');poly([[face-.2,-1,178],[face-.2,1,178],[face-.2,1,212],[face-.2,-1,212]],'#fff2c1');
       }
-      if(type==='grating'){for(let y=-22;y<=22;y+=4){const h=Math.sqrt(29*29-y*y);line([[face-.2,y,195-h],[face-.2,y,195+h]],'#7b9394',.55);}}
+      if(type==='grating'){const r=state.aperture/2;for(let y=-r+1;y<r;y+=1.5){const h=Math.sqrt(r*r-y*y);line([[face-.2,y,195-h],[face-.2,y,195+h]],'#799599',.45);}}
       if(type==='lens')line([[face-.3,-18,215],[face-.3,2,222],[face-.3,15,215]],'#f0f4e9',1.4);
     }
-    function wavelengthColor(w){
-      const keys=[[410,[128,104,190]],[450,[91,135,209]],[490,[90,170,190]],[530,[114,184,110]],[570,[211,194,101]],[610,[213,151,91]],[670,[195,102,94]],[710,[160,88,89]]];
-      let i=0;while(i<keys.length-2&&w>keys[i+1][0])i++;const t=clamp((w-keys[i][0])/(keys[i+1][0]-keys[i][0]),0,1);
-      return 'rgb('+keys[i][1].map((a,k)=>Math.round(a*(1-t)+keys[i+1][1][k]*t)).join(',')+')';
+    function spectrumStrip(){
+      const key=[state.light,state.filter,state.screen,state.aperture].join(':');
+      if(lightStrip&&lightStripKey===key)return lightStrip;
+      const profile=SpektrSpectrum.profile({distanceMm:855-state.screen,apertureMm:state.aperture,filter:state.filter,light:state.light});
+      const strip=lightStrip||document.createElement('canvas');strip.width=profile.samples;strip.height=1;
+      const c=strip.getContext('2d'),pixels=c.createImageData(profile.samples,1);
+      for(let i=0;i<profile.samples;i++){
+        const j=i*3,k=i*4,peak=Math.max(profile.rgb[j],profile.rgb[j+1],profile.rgb[j+2]);
+        // Hue is normalized per pixel, but opacity retains absolute flux across all settings.
+        const hue=peak?SpektrSpectrum.displayRgb(profile.rgb[j]/peak,profile.rgb[j+1]/peak,profile.rgb[j+2]/peak,8):[0,0,0];
+        for(let channel=0;channel<3;channel++)pixels.data[k+channel]=hue[channel];
+        pixels.data[k+3]=Math.round(255*(1-Math.exp(-peak*3.2)));
+      }
+      c.putImageData(pixels,0,0);lightStrip=strip;lightStripKey=key;return strip;
     }
     function screenFace(x){
-      const key=[state.light,state.filter,state.screen,state.view,Math.round(scale*100)].join(':');
+      const key=[state.light,state.filter,state.screen,state.aperture,state.view,Math.round(scale*100)].join(':');
       const p=[[x,-135,110],[x,135,110],[x,135,305],[x,-135,305]];
       if(key===screenTextureKey&&screenTexture){decal(p,screenTexture,[[1,1],[0,1],[0,0],[1,0]]);return;}
       const texture=screenTexture||document.createElement('canvas');
       if(texture.width!==1080||texture.height!==780){texture.width=1080;texture.height=780;}
       const c=texture.getContext('2d');c.setTransform(4,0,0,4,0,0);c.fillStyle='#d4dfd0';c.fillRect(0,0,270,195);
       if(state.light){
-        const D=855-state.screen;
-        for(const m of[3,2,1])for(const sign of[-1,1])for(let w=410;w<=700;w+=5){
-          const a=m*w/10000,b=m*(w+6)/10000;const y1=sign*D*Math.tan(Math.asin(a)),y2=sign*D*Math.tan(Math.asin(b));
-          if(Math.min(Math.abs(y1),Math.abs(y2))>132)continue;
-          const pass=state.filter==='none'?1:state.filter==='green'?Math.exp(-.5*((w-535)/30)**2):Math.exp(-.5*((w-650)/38)**2);
-          c.globalAlpha=pass*(m===1?.72:m===2?.46:.10);c.fillStyle=wavelengthColor(w);
-          const left=clamp(Math.min(y1,y2),-132,132),right=clamp(Math.max(y1,y2),-132,132);
-          c.fillRect(left+135,9,right-left,177);
+        const strip=spectrumStrip();
+        // Soft top/bottom edges; one continuous horizontal profile in every view.
+        for(let z=9;z<186;z+=.5){
+          const edge=clamp(Math.min(z-9,186-z)/13,0,1);
+          c.globalAlpha=edge*edge*(3-2*edge);
+          c.drawImage(strip,0,0,strip.width,1,0,z,270,.5);
         }
-        c.fillStyle=state.filter==='red'?'#e4a688':state.filter==='green'?'#bce0a5':'#fff1b5';
-        for(const [width,alpha]of[[7,.1],[3,.25],[1.2,.84]]){c.globalAlpha=alpha;c.fillRect(135-width,9,width*2,177);}
       }
       c.globalAlpha=1;c.strokeStyle='#52605b';c.lineWidth=Math.max(.45,.65/scale);c.beginPath();c.moveTo(25,124);c.lineTo(245,124);c.stroke();
-      c.fillStyle='#41534c';c.font=`${11/scale}px Tahoma, sans-serif`;c.textAlign='center';c.textBaseline='middle';
+      c.fillStyle='#41534c';c.font=`${11*state.zoom/scale}px Tahoma, sans-serif`;c.textAlign='center';c.textBaseline='middle';
       const every=state.view==='screen'?Math.max(1,Math.ceil(14/(10*scale))):scale>.9?2:100;
       for(let y=-110;y<=110;y+=5){const major=y%10===0;c.beginPath();c.moveTo(135+y,124);c.lineTo(135+y,major?116:120);c.stroke();if(major&&(y===0||y%(every*10)===0))c.fillText(String(Math.abs(y)/10),135+y,108);}
       texturePixels.delete(texture);screenTexture=texture;screenTextureKey=key;decal(p,texture,[[1,1],[0,1],[0,0],[1,0]]);
@@ -223,6 +540,7 @@
     }
     function build(){
       faces=[];positionGuides=[];
+      if(state.view==='grating'){holder(855,'grating');staticFaceCount=faces.length;return;}
       const detail=state.view==='optics', closeScreen=state.view==='screen';
       poly([[-60,-165,-1],[1320,-165,-1],[1320,145,-1],[-60,145,-1]],'#7c969d',false,.14);
       box(-20,1285,-138,112,0,12,'#b8bcb4');
@@ -249,14 +567,15 @@
       right=[-Math.sin(az),Math.cos(az),0];up=cross(right,eye).map(x=>-x);
       let bounds=v.bounds;
       if(state.view==='screen')bounds=[[state.screen-6,-153,85],[state.screen+7,153,326]];
-      else if(state.values)bounds=[[bounds[0][0],-190,bounds[0][2]],bounds[1]];
+      else if(state.values&&state.view!=='grating')bounds=[[bounds[0][0],-190,bounds[0][2]],bounds[1]];
       const [a,b]=bounds,pts=[];
       for(const x of[a[0],b[0]])for(const y of[a[1],b[1]])for(const z of[a[2],b[2]])pts.push([dot([x,y,z],right),-dot([x,y,z],up)]);
       const minX=Math.min(...pts.map(p=>p[0])),maxX=Math.max(...pts.map(p=>p[0])),minY=Math.min(...pts.map(p=>p[1])),maxY=Math.max(...pts.map(p=>p[1]));
       const reserved=state.labels&&state.view!=='screen'?66:20;
-      const bottom=state.values&&state.view!=='screen'?54:35;
+      const bottom=state.values&&!['screen','grating'].includes(state.view)?54:35;
       scale=Math.min((W-44)/(maxX-minX),(H-reserved-bottom)/(maxY-minY));
-      ox=W/2-(minX+maxX)*scale/2;oy=reserved+(H-reserved-bottom)/2+9-(minY+maxY)*scale/2;
+      scale*=state.zoom;
+      ox=W/2-(minX+maxX)*scale/2+state.panX*W;oy=reserved+(H-reserved-bottom)/2+9-(minY+maxY)*scale/2+state.panY*H;
     }
     const colorCache=new Map();
     function colorChannels(color){
@@ -308,7 +627,7 @@
       const started=performance.now();
       const rw=Math.round(W*rasterRatio),rh=Math.round(H*rasterRatio);
       if(rasterCanvas.width!==rw||rasterCanvas.height!==rh){rasterCanvas.width=rw;rasterCanvas.height=rh;rasterImage=rasterContext.createImageData(rw,rh);rasterWords=new Uint32Array(rasterImage.data.buffer);rasterDepth=new Float32Array(rw*rh);}
-      const key=[W,H,rasterRatio,state.view,state.labels,state.values,state.filter,state.light,design.table,design.facets,state.view==='screen'?state.screen:''].join(':');
+      const key=[W,H,rasterRatio,state.view,state.labels,state.values,state.filter,state.light,state.aperture,state.zoom,state.panX,state.panY,design.table,design.facets,state.view==='screen'?state.screen:''].join(':');
       function paintGroup(group){group.filter(f=>!f.stroke&&!f.texture&&f.alpha===1).forEach(rasterFace);group.filter(f=>f.texture).forEach(rasterFace);group.filter(f=>!f.stroke&&!f.texture&&f.alpha<1).sort((a,b)=>a.depth-b.depth).forEach(rasterFace);group.filter(f=>f.stroke).forEach(rasterLine);}
       if(staticCache&&staticCache.key===key){rasterWords.set(staticCache.words);rasterDepth.set(staticCache.depth);}
       else{rasterWords.fill(packed(...colorChannels(design.table)));rasterDepth.fill(-Infinity);paintGroup(faces.slice(0,staticFaceCount));staticCache={key,words:new Uint32Array(rasterWords),depth:new Float32Array(rasterDepth)};}
@@ -320,9 +639,10 @@
     function annotations(){
       labelBoxes=[];if(!state.labels||state.view==='screen')return;
       let labels;
-      if(state.view==='optics')labels=[['Фильтр',[810,0,state.filter==='none'?105:243]],['Решётка',[855,0,244]],['Линза',[900,0,244]],['Щель',[955,0,244]]];
-      else labels=[['Экран',[state.screen,0,311]],['Оптика',[855,0,244]],['Источник',[1130,0,257]]];
-      ctx.font='12px Tahoma, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      if(state.view==='grating')labels=[['Рабочее отверстие',[845,0,195]]];
+      else if(state.view==='optics')labels=[['Фильтр',[810,0,state.filter==='none'?105:243]],['Решётка',[855,0,244]],['Линза',[900,0,244]],['Щель',[955,0,244]]];
+      else labels=[['Экран',[state.screen,0,311]],['Линза · решётка · фильтр',[855,0,244]],['Источник',[1130,0,257]]];
+      ctx.font=(W<440?'11':'12')+'px Tahoma, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
       const widths=labels.map(([text])=>ctx.measureText(text).width+14),gap=12,total=widths.reduce((a,b)=>a+b,0)+gap*(labels.length-1);
       const center=clamp(labels.reduce((sum,item)=>sum+project(item[1])[0],0)/labels.length-(state.view==='optics'?Math.min(35,W*.035):0),total/2+12,W-total/2-12);
       let left=center-total/2;
@@ -332,9 +652,25 @@
       for(const item of labelBoxes){ctx.fillStyle=design.table;ctx.fillRect(item.left,item.top,item.right-item.left,item.bottom-item.top);}
       ctx.fillStyle='#334c55';for(const item of labelBoxes)ctx.fillText(item.text,item.x,item.y);
     }
+    function syncControls(){
+      canvas.dataset.cameraView=state.view;canvas.dataset.zoomLevel=String(state.zoom);canvas.dataset.apertureMm=String(state.aperture);
+      canvas.dataset.pan=state.panX.toFixed(4)+','+state.panY.toFixed(4);
+      root.querySelector('[data-zoom-reset]').textContent=Math.round(state.zoom*100)+'%';
+      root.querySelectorAll('[data-zoom]').forEach(b=>b.disabled=Number(b.dataset.zoom)<0?state.zoom<=.75:state.zoom>=3);
+      root.querySelector('.xp-aperture-control').hidden=state.view!=='grating';
+      root.querySelector('[data-aperture]').value=state.aperture;
+      root.querySelector('[data-aperture-value]').textContent=String(state.aperture).replace('.',',')+' мм';
+      root.querySelector('[data-aperture]').setAttribute('aria-valuetext',state.aperture+' миллиметров');
+      root.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===state.view)));
+      root.querySelector('[data-light]').checked=state.light;root.querySelector('[data-filter]').value=state.filter;root.querySelector('[data-labels]').checked=state.labels;
+      root.querySelector('[data-values]').checked=state.values;
+      root.querySelectorAll('[data-move]').forEach(b=>b.disabled=(Number(b.dataset.move)<0&&state.screen<=100)||(Number(b.dataset.move)>0&&state.screen>=650));
+    }
     function render(){
+      syncControls();
       if(renderPending){cancelAnimationFrame(renderPending);renderPending=0;}
-      const rect=canvas.getBoundingClientRect();W=Math.max(280,Math.round(rect.width));H=Math.round(rect.height);const dpr=Math.min(window.devicePixelRatio||1,2);
+      const rect=canvas.getBoundingClientRect();if(rect.width<1||rect.height<1)return;
+      W=Math.max(280,Math.round(rect.width));H=Math.round(rect.height);const dpr=Math.min(window.devicePixelRatio||1,2);
       rasterRatio=Math.min(2,Math.sqrt(rasterBudget/(W*H)));
       const cw=Math.round(W*dpr),ch=Math.round(H*dpr);
       if(canvas.width!==cw||canvas.height!==ch){canvas.width=cw;canvas.height=ch;}
@@ -343,13 +679,10 @@
       camera();build();paintScene();ctx.globalAlpha=1;drawPositionGuides();annotations();drawScreenRuler();
       const s=state.screen,hit=[[s-15,-144,80],[s+130,-144,80],[s+130,144,313],[s-15,144,313]].map(project);
       hitScreen={minX:Math.min(...hit.map(p=>p[0])),maxX:Math.max(...hit.map(p=>p[0])),minY:Math.min(...hit.map(p=>p[1])),maxY:Math.max(...hit.map(p=>p[1]))};
-      root.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===state.view)));
-      root.querySelector('[data-light]').checked=state.light;root.querySelector('[data-filter]').value=state.filter;root.querySelector('[data-labels]').checked=state.labels;
-      root.querySelector('[data-values]').checked=state.values;
-      root.querySelectorAll('[data-move]').forEach(b=>b.disabled=(Number(b.dataset.move)<0&&s<=100)||(Number(b.dataset.move)>0&&s>=650));
+
     }
     function persist(){
-      const saved={modelContent:{view:state.view,screenMm:state.screen,filter:state.filter,light:state.light},privateContent:{labels:state.labels,values:state.values}};
+      const saved={modelContent:{view:state.view,screenMm:state.screen,filter:state.filter,light:state.light,apertureMm:state.aperture},privateContent:{labels:state.labels,values:state.values,zoom:state.zoom,panX:state.panX,panY:state.panY}};
       try{
         if(window.openai&&typeof window.openai.setWidgetState==='function')Promise.resolve(window.openai.setWidgetState(saved)).catch(()=>{});
         else localStorage.setItem(storageKey,JSON.stringify(saved));
@@ -359,19 +692,36 @@
       if(!saved||typeof saved!=='object')return;
       const m=saved.modelContent||saved,p=saved.privateContent||{};
       if(views[m.view])state.view=m.view;if(Number.isFinite(m.screenMm))state.screen=clamp(Math.round(m.screenMm),100,650);
-      if(['none','red','green'].includes(m.filter))state.filter=m.filter;if(typeof m.light==='boolean')state.light=m.light;if(typeof p.labels==='boolean')state.labels=p.labels;
+      if(m.filter==='green')state.filter='blue';else if(['none','red','blue'].includes(m.filter))state.filter=m.filter;if(typeof m.light==='boolean')state.light=m.light;if(typeof p.labels==='boolean')state.labels=p.labels;
       if(typeof p.values==='boolean')state.values=p.values;
+      if(Number.isFinite(m.apertureMm))state.aperture=clamp(Math.round(m.apertureMm*2)/2,2,20);
+      if(Number.isFinite(p.zoom))state.zoom=clamp(p.zoom,.75,3);
+      if(Number.isFinite(p.panX))state.panX=clamp(p.panX,-1.5,1.5);
+      if(Number.isFinite(p.panY))state.panY=clamp(p.panY,-1.5,1.5);
     }
     function announce(text){root.querySelector('[data-live]').textContent=text;}
     function changed(){render();persist();}
     function queueRender(){if(!renderPending)renderPending=requestAnimationFrame(render);}
     function clearPointer(){screenRuler=null;tooltip.style.display='none';canvas.style.cursor='default';}
-    root.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{state.view=b.dataset.view;clearPointer();changed();}));
+    root.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{state.view=b.dataset.view;state.zoom=1;state.panX=state.panY=0;cancelGesture();clearPointer();changed();}));
     root.querySelector('[data-light]').addEventListener('change',e=>{state.light=e.target.checked;changed();announce(state.light?'Источник включён':'Источник выключен');});
     root.querySelector('[data-filter]').addEventListener('change',e=>{state.filter=e.target.value;changed();announce('Светофильтр: '+e.target.selectedOptions[0].textContent);});
     root.querySelector('[data-labels]').addEventListener('change',e=>{state.labels=e.target.checked;changed();});
     root.querySelector('[data-values]').addEventListener('change',e=>{state.values=e.target.checked;clearPointer();changed();});
     root.querySelectorAll('[data-move]').forEach(b=>b.addEventListener('click',()=>{const next=Number(b.dataset.move)>0?(Math.floor(state.screen/10)+1)*10:(Math.ceil(state.screen/10)-1)*10;state.screen=clamp(next,100,650);clearPointer();changed();announce(`Экран на отметке ${state.screen} миллиметров`);}));
+    root.querySelector('[data-aperture]').addEventListener('input',e=>{state.aperture=clamp(Number(e.target.value),2,20);clearPointer();changed();});
+    function zoomAt(value,p=[W/2,H/2]){
+      camera();
+      const oldZoom=state.zoom,oldX=ox,oldY=oy;
+      state.zoom=clamp(value,.75,3);camera();
+      const ratio=state.zoom/oldZoom;
+      state.panX=clamp(state.panX+(p[0]-(p[0]-oldX)*ratio-ox)/W,-1.5,1.5);
+      state.panY=clamp(state.panY+(p[1]-(p[1]-oldY)*ratio-oy)/H,-1.5,1.5);
+      clearPointer();
+    }
+    root.querySelectorAll('[data-zoom]').forEach(b=>b.addEventListener('click',()=>{zoomAt(Math.round((state.zoom+Number(b.dataset.zoom)*.25)*100)/100);changed();}));
+    root.querySelector('[data-zoom-reset]').addEventListener('click',()=>{state.zoom=1;state.panX=state.panY=0;cancelGesture();clearPointer();changed();});
+    canvas.addEventListener('wheel',e=>{e.preventDefault();cancelGesture();zoomAt(state.zoom*Math.exp(-clamp(e.deltaY,-120,120)*.002),point(e));queueRender();persist();},{passive:false});
     function point(e){const r=canvas.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height];}
     function screenHit(p){return(state.view==='overview'||state.view==='top')&&hitScreen&&p[0]>=hitScreen.minX&&p[0]<=hitScreen.maxX&&p[1]>=hitScreen.minY&&p[1]<=hitScreen.maxY;}
     function onScreenPlane(p){
@@ -401,24 +751,69 @@
       ctx.restore();
     }
     function repaintRuler(){ctx.drawImage(rasterCanvas,0,0,W,H);drawScreenRuler();}
+    function capture(e){try{canvas.setPointerCapture(e.pointerId);}catch(_){}}
+    function cancelGesture(){
+      const captured=new Set(pointers.keys());if(drag)captured.add(drag.pointer);
+      pointers.clear();pinch=null;drag=null;
+      for(const id of captured)try{if(canvas.hasPointerCapture(id))canvas.releasePointerCapture(id);}catch(_){}
+    }
+    function pinchPoints(){const [a,b]=[...pointers.values()];return{mid:[(a[0]+b[0])/2,(a[1]+b[1])/2],distance:Math.max(1,Math.hypot(a[0]-b[0],a[1]-b[1]))};}
     canvas.addEventListener('pointerdown',e=>{
-      if(drag)return;
-      const p=point(e);if(state.view==='screen'){tooltip.style.display='none';screenRuler=state.values?onScreenPlane(p):null;canvas.style.cursor=screenRuler?'crosshair':'default';repaintRuler();return;}
-      if(e.button!==0||!screenHit(p))return;const a=project([0,0,0]),b=project([1,0,0]);drag={pointer:e.pointerId,p,start:state.screen,dx:b[0]-a[0],dy:b[1]-a[1]};if(canvas.setPointerCapture)canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';
+      const p=point(e);
+      if(e.pointerType==='touch'){
+        pointers.set(e.pointerId,p);capture(e);
+        if(pointers.size>=2){if(pointers.size===2){const now=pinchPoints();pinch={...now,zoom:state.zoom};drag=null;clearPointer();}return;}
+      }
+      if(drag||e.button!==0&&e.button!==1)return;
+      const plane=state.view==='screen'?onScreenPlane(p):null;
+      if(plane&&!e.shiftKey&&e.button===0){screenRuler=state.values?plane:null;canvas.style.cursor=screenRuler?'crosshair':'default';repaintRuler();return;}
+      if(screenHit(p)&&!e.shiftKey&&e.button===0){
+        const a=project([0,0,0]),b=project([1,0,0]);drag={kind:'screen',pointer:e.pointerId,p,start:state.screen,dx:b[0]-a[0],dy:b[1]-a[1]};
+      }else if(state.zoom!==1||e.shiftKey||e.button===1){
+        drag={kind:'pan',pointer:e.pointerId,p,panX:state.panX,panY:state.panY};
+      }
+      if(drag){e.preventDefault();capture(e);canvas.style.cursor='grabbing';}
     });
     canvas.addEventListener('pointermove',e=>{
-      if(drag&&e.pointerId!==drag.pointer)return;
       const p=point(e);
-      if(state.view==='screen'){tooltip.style.display='none';screenRuler=state.values?onScreenPlane(p):null;canvas.style.cursor=screenRuler?'crosshair':'default';repaintRuler();return;}
-      if(drag){const denom=drag.dx**2+drag.dy**2;state.screen=clamp(Math.round(drag.start+((p[0]-drag.p[0])*drag.dx+(p[1]-drag.p[1])*drag.dy)/denom),100,650);queueRender();}
-      const hit=screenHit(p)||!!drag;canvas.style.cursor=drag?'grabbing':hit?'grab':'default';tooltip.style.display=hit&&state.values?'block':'none';
-      if(hit&&state.values){tooltip.textContent=`Экран · ${state.screen} мм`;tooltip.style.left=Math.min(p[0]+14,W-135)+'px';tooltip.style.top=Math.min(p[1]+18,H-33)+'px';}
+      if(pointers.has(e.pointerId))pointers.set(e.pointerId,p);
+      if(pinch&&pointers.size>=2){
+        const now=pinchPoints();zoomAt(pinch.zoom*now.distance/pinch.distance,pinch.mid);
+        state.panX=clamp(state.panX+(now.mid[0]-pinch.mid[0])/W,-1.5,1.5);
+        state.panY=clamp(state.panY+(now.mid[1]-pinch.mid[1])/H,-1.5,1.5);
+        pinch.mid=now.mid;camera();queueRender();return;
+      }
+      if(drag&&e.pointerId!==drag.pointer)return;
+      if(drag){
+        if(drag.kind==='screen'){
+          const denom=drag.dx**2+drag.dy**2;
+          state.screen=clamp(Math.round(drag.start+((p[0]-drag.p[0])*drag.dx+(p[1]-drag.p[1])*drag.dy)/denom),100,650);
+        }else{
+          state.panX=clamp(drag.panX+(p[0]-drag.p[0])/W,-1.5,1.5);state.panY=clamp(drag.panY+(p[1]-drag.p[1])/H,-1.5,1.5);
+        }
+        tooltip.style.display='none';queueRender();return;
+      }
+      if(state.view==='screen'){
+        tooltip.style.display='none';screenRuler=state.values?onScreenPlane(p):null;canvas.style.cursor=screenRuler?'crosshair':state.zoom!==1?'grab':'default';repaintRuler();return;
+      }
+      const hit=screenHit(p);canvas.style.cursor=hit||state.zoom!==1?'grab':'default';tooltip.style.display=hit&&state.values?'block':'none';
+      if(hit&&state.values){tooltip.textContent='Экран · '+state.screen+' мм';tooltip.style.left=Math.min(p[0]+14,W-135)+'px';tooltip.style.top=Math.min(p[1]+18,H-33)+'px';}
     });
-    function endDrag(e){if(!drag||e.pointerId!==drag.pointer)return;if(canvas.hasPointerCapture&&canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);drag=null;canvas.style.cursor=state.view==='screen'?'default':'grab';render();persist();announce(`Экран на отметке ${state.screen} миллиметров`);}
-    canvas.addEventListener('pointerup',endDrag);canvas.addEventListener('pointercancel',e=>{endDrag(e);clearPointer();if(state.view==='screen')repaintRuler();});canvas.addEventListener('pointerleave',e=>{if(e.pointerType==='touch'&&state.view==='screen')return;if(!drag){clearPointer();if(state.view==='screen')repaintRuler();}});
+    function endPointer(e){
+      pointers.delete(e.pointerId);
+      if(pinch){if(pointers.size<2){cancelGesture();render();persist();}return;}
+      if(!drag||e.pointerId!==drag.pointer)return;
+      const movedScreen=drag.kind==='screen';cancelGesture();canvas.style.cursor='default';render();persist();
+      if(movedScreen)announce('Экран на отметке '+state.screen+' миллиметров');
+    }
+    canvas.addEventListener('pointerup',endPointer);
+    canvas.addEventListener('pointercancel',e=>{endPointer(e);clearPointer();queueRender();});
+    canvas.addEventListener('lostpointercapture',e=>{if(drag&&drag.pointer===e.pointerId)endPointer(e);});
+    canvas.addEventListener('pointerleave',e=>{if(e.pointerType==='touch'&&state.view==='screen')return;if(!drag&&!pinch){clearPointer();if(state.view==='screen')repaintRuler();}});
     if(window.openai)restore(window.openai.widgetState);
     else{try{restore(JSON.parse(localStorage.getItem(storageKey)));}catch(_){}}
     window.addEventListener('openai:set_globals',e=>{const saved=e.detail&&e.detail.globals&&e.detail.globals.widgetState;if(saved){restore(saved);render();}});
+    setupSpektrWindows(root,queueRender);
     render();
     if(typeof ResizeObserver==='function')new ResizeObserver(queueRender).observe(stage);
     else window.addEventListener('resize',queueRender);

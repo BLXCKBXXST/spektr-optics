@@ -11,7 +11,7 @@ const assert = require('node:assert/strict');
   assert.equal(await app.locator('.xp-version').count(),0,'No draft label in the header');
   assert.equal(await app.locator('.xp-status').count(),0,'No extra footer copy');
   await app.locator('#optics-xp-sketch').screenshot({path:screenshotPath('xp-overview.png')});
-  for (const view of ['top','optics','screen']) {
+  for (const view of ['top','optics','grating','screen']) {
     await app.locator('[data-view="'+view+'"]').click();
     await app.locator('#optics-xp-sketch').screenshot({path:screenshotPath('xp-'+view+'.png')});
   }
@@ -26,11 +26,11 @@ const assert = require('node:assert/strict');
   await app.locator('[data-light]').uncheck();
   assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),on,'Light switch changes the sketch');
   await app.locator('[data-light]').check();
-  await app.locator('[data-filter]').selectOption('green');
-  const green=await canvas.evaluate(c=>c.toDataURL());
-  assert.notEqual(green,on,'Green filter changes the sketch');
+  await app.locator('[data-filter]').selectOption('blue');
+  const blue=await canvas.evaluate(c=>c.toDataURL());
+  assert.notEqual(blue,on,'Blue filter changes the sketch');
   await app.locator('[data-filter]').selectOption('red');
-  assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),green,'Red and green differ');
+  assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),blue,'Red and blue differ');
   await app.locator('[data-filter]').selectOption('none');
   await app.locator('[data-view="top"]').click();
   await app.locator('[data-move="10"]').click();
@@ -65,7 +65,7 @@ const assert = require('node:assert/strict');
     await app.locator('#optics-xp-sketch').screenshot({path:screenshotPath('xp-width-'+width+'.png')});
     if(width===320){await app.locator('[data-view="optics"]').click();await app.locator('#optics-xp-sketch').screenshot({path:screenshotPath('xp-optics-320.png')});}
   }
-  console.log(JSON.stringify({errors,checks:'Light, filters, drag, 100–650 mm limits, four views and 320/375/736 responsive widths checked'},null,2));
+  console.log(JSON.stringify({errors,checks:'Light, filters, drag, 100–650 mm limits, five views and 320/375/736 responsive widths checked'},null,2));
   if(errors.length)process.exitCode=1;
   } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

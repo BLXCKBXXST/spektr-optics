@@ -6,7 +6,7 @@
   "engines": {"node": ">=20"},
   "scripts": {
     "build": "node scripts/build.cjs",
-    "test": "npm run build && npm run test:offline && npm run test:responsive && npm run test:interaction",
+    "test": "npm run build && node tests/spectrum.cjs && npm run test:offline && npm run test:responsive && npm run test:interaction && node tests/features.cjs",
     "test:offline": "node tests/offline.cjs",
     "test:responsive": "node tests/responsive.cjs",
     "test:interaction": "node tests/smoke.cjs && node tests/measurements.cjs && node tests/controls.cjs"
