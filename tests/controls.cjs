@@ -10,11 +10,23 @@ const assert=require('node:assert/strict');
     const frame=page,canvas=app.locator('canvas');
     const restore=async(screenMm,labels=false,values=true)=>frame.evaluate(({screenMm,labels,values})=>window.dispatchEvent(new CustomEvent('openai:set_globals',{detail:{globals:{widgetState:{modelContent:{view:'top',screenMm,filter:'none',light:true},privateContent:{labels,values}}}}})),{screenMm,labels,values});
     const screenMm=async()=>Number((await app.locator('[data-live]').textContent()).match(/\d+/)?.[0]);
-    assert.equal(await app.locator('.xp-toolbar input[type="checkbox"]').count(),3,'Names, values, and light switches share the toolbar');
+    assert.deepEqual(await app.locator('.xp-controls > fieldset > legend').allTextContents(),['Светофильтр','Решётка','Перемещение экрана'],'Equipment controls have three clearly named groups');
+    assert.equal(await app.getByRole('group',{name:'Светофильтр',exact:true}).locator('[data-filter]').count(),1,'Filter is associated with its group name');
+    assert.equal(await app.getByRole('group',{name:'Решётка',exact:true}).getByLabel('Диаметр рабочего отверстия решётки').count(),1,'Aperture has an accessible label in the grating group');
+    assert.equal(await app.getByRole('group',{name:'Перемещение экрана',exact:true}).locator('[data-move]').count(),2,'Screen arrows are grouped separately from view selection');
+    assert.equal(await app.getByRole('group',{name:'Ракурс установки',exact:true}).locator('[data-view]').count(),5,'View selection has its own named group');
+    assert.equal(await app.getByRole('group',{name:'Масштаб вида',exact:true}).locator('button').count(),3,'Zoom has its own named group');
+    assert.equal(await app.locator('.xp-toggles input[type="checkbox"]').count(),3,'Names, values, and light switches share one row');
     for(const selector of ['[data-labels]','[data-values]','[data-light]']){
-      assert.equal(await app.locator(selector).evaluate(e=>Boolean(e.closest('.xp-toolbar'))),true);
+      assert.equal(await app.locator(selector).evaluate(e=>Boolean(e.closest('.xp-toggles'))),true);
     }
-    assert.equal(await app.locator('.xp-controls').evaluate(e=>e.firstElementChild.matches('[data-filter]')||Boolean(e.firstElementChild.querySelector('[data-filter]'))),true,'Filter is first in the bottom control strip');
+    assert.equal(await app.locator('.xp-controls').evaluate(e=>Boolean(e.firstElementChild.querySelector('[data-filter]'))),true,'Filter is the first equipment group');
+    const groups=await app.locator('.xp-control-window').evaluate(element=>{
+      const rect=selector=>{const r=element.querySelector(selector).getBoundingClientRect();return{top:r.top,bottom:r.bottom};};
+      return{view:rect('.xp-toolbar'),equipment:rect('.xp-controls'),toggles:rect('.xp-toggles')};
+    });
+    assert.ok(groups.equipment.top>=groups.view.bottom-1,'View and zoom sit above the equipment controls');
+    assert.ok(groups.toggles.top>=groups.equipment.bottom-1,'Display and light switches sit below the equipment controls');
     const control=await app.locator('.xp-screen-control').evaluate(e=>{
       const left=e.querySelector('[data-move="-10"]'),right=e.querySelector('[data-move="10"]');
       const label=[...e.querySelectorAll('*')].find(n=>!n.closest('button')&&n.textContent.trim()==='Экран');
@@ -75,7 +87,7 @@ const assert=require('node:assert/strict');
       assert.ok(layout.filter-layout.controls<100,`Filter remains at the left of the control strip at ${width}`);
       await app.locator('#optics-xp-sketch').screenshot({path:screenshotPath(`xp-values-controls-${width}.png`)});
     }
-    console.log(JSON.stringify({errors,checks:'Three toolbar toggles, left-aligned filter, enlarged flanking arrows, directional 10-mm snapping, independent/restored values, 1-mm dragging, responsive controls'},null,2));
+    console.log(JSON.stringify({errors,checks:'Named equipment groups, separate view/zoom controls, three lower toggles, left-aligned filter, enlarged flanking arrows, directional 10-mm snapping, independent/restored values, 1-mm dragging, responsive controls'},null,2));
     if(errors.length)process.exitCode=1;
   }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

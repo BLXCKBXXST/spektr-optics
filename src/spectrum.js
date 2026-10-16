@@ -13,7 +13,7 @@ const SpektrSpectrum = (() => {
   'use strict';
 
   const GRATING_PERIOD_MM = 0.01;
-  const MIN_APERTURE_MM = 2;
+  const MIN_APERTURE_MM = 10;
   const MAX_APERTURE_MM = 20;
   const DEFAULT_APERTURE_MM = 18;
   const MIN_WAVELENGTH_NM = 380;
@@ -44,6 +44,7 @@ const SpektrSpectrum = (() => {
 
   function transmission(wavelengthNm, filter) {
     if (filter === 'red') return Math.exp(-0.5 * ((wavelengthNm - 650) / 22) ** 2);
+    if (filter === 'green') return Math.exp(-0.5 * ((wavelengthNm - 550) / 22) ** 2);
     if (filter === 'blue') return Math.exp(-0.5 * ((wavelengthNm - 465) / 21) ** 2);
     return 1;
   }
@@ -73,7 +74,7 @@ const SpektrSpectrum = (() => {
   function profile(options = {}) {
     const distanceMm = clamp(finite(options.distanceMm, 605), 1, 5000);
     const apertureMm = clamp(finite(options.apertureMm, DEFAULT_APERTURE_MM), MIN_APERTURE_MM, MAX_APERTURE_MM);
-    const filter = options.filter === 'red' || options.filter === 'blue' ? options.filter : 'none';
+    const filter = ['red', 'green', 'blue'].includes(options.filter) ? options.filter : 'none';
     const widthMm = clamp(finite(options.widthMm, 270), 1, 2000);
     const samples = clamp(Math.round(finite(options.samples, 1080)), 2, 8192);
     const stepMm = widthMm / samples;
@@ -160,7 +161,29 @@ const SpektrSpectrum = (() => {
     });
   }
 
-  return Object.freeze({ profile, toDisplay, displayRgb, transmission, orderPositionMm, blurSigmaMm,
+  function screenStrip(lightProfile) {
+    const pixels = new Uint8ClampedArray(lightProfile.samples * 4);
+    for (let i = 0; i < lightProfile.samples; i++) {
+      const source = i * 3, target = i * 4;
+      const channels = [0, 1, 2].map(channel => Math.max(0, finite(lightProfile.rgb[source + channel], 0)));
+      const peak = Math.max(...channels);
+      if (peak === 0) continue;
+      const hue = displayRgb(...channels.map(value => value / peak), 8);
+      // A restrained, paper-like palette instead of fully saturated primaries.
+      // This is display styling only; the linear light profile stays untouched.
+      for (let channel = 0; channel < 3; channel++) {
+        pixels[target + channel] = Math.round(218 + (hue[channel] - 218) * 0.62);
+      }
+      // One common curve reduces bright-band contrast, while its soft toe keeps
+      // faint higher orders visible. No per-frame normalization or light floor:
+      // narrowing the aperture still dims the picture and zero light is clear.
+      const exposed = -Math.expm1(-peak * 3.2);
+      pixels[target + 3] = Math.round(255 * 0.72 * exposed ** 0.8);
+    }
+    return pixels;
+  }
+
+  return Object.freeze({ profile, toDisplay, displayRgb, screenStrip, transmission, orderPositionMm, blurSigmaMm,
     GRATING_PERIOD_MM, MIN_APERTURE_MM, MAX_APERTURE_MM, DEFAULT_APERTURE_MM });
 })();
 

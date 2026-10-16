@@ -15,7 +15,7 @@ function setupSpektrWindows(root, onLayout = () => {}) {
     #optics-xp-sketch.xp-window-expanded{height:auto;grid-template-rows:auto auto;align-content:start}
     #optics-xp-sketch .xp-window.is-expanded:not(.is-minimized){min-height:calc(100vh - 2 * var(--page-padding,12px));min-height:calc(100dvh - 2 * var(--page-padding,12px))}
     #optics-xp-sketch .xp-control-window.is-expanded:not(.is-minimized){display:flex;flex-direction:column}
-    #optics-xp-sketch .xp-control-window.is-expanded:not(.is-minimized) .xp-toolbar{flex:1;align-content:center}
+    #optics-xp-sketch .xp-control-window.is-expanded:not(.is-minimized) .xp-controls{flex:1;align-content:center}
     #optics-xp-sketch .xp-window-toast{position:fixed;right:12px;bottom:12px;z-index:10;max-width:calc(100vw - 24px);padding:9px 12px;border:1px solid #9c967f;border-radius:3px;background:#fff9dd;box-shadow:0 2px 7px #26384d25;color:#24323c;pointer-events:none}
     #optics-xp-sketch .xp-window-toast[hidden]{display:none}
     @media(pointer:coarse){#optics-xp-sketch .xp-window-actions button{width:44px;min-width:44px;min-height:44px}}

@@ -78,11 +78,12 @@ function finishProfile(profile, name, extra = {}) {
     await page.locator('[data-light]').uncheck();
     assert.notEqual(await canvas.evaluate(c => c.toDataURL()), lit, 'Light changes the screen image');
     await page.locator('[data-light]').check();
-    await page.locator('[data-filter]').selectOption('blue');
-    const blue = await canvas.evaluate(c => c.toDataURL());
-    assert.notEqual(blue, lit, 'Blue filter changes the image');
-    await page.locator('[data-filter]').selectOption('red');
-    assert.notEqual(await canvas.evaluate(c => c.toDataURL()), blue, 'Red and blue filters differ');
+    const filterImages = [lit];
+    for (const filter of ['red', 'green', 'blue']) {
+      await page.locator('[data-filter]').selectOption(filter);
+      filterImages.push(await canvas.evaluate(c => c.toDataURL()));
+    }
+    assert.equal(new Set(filterImages).size, 4, 'Every filter changes the spectrum independently, fully offline');
 
     for (const [start, move, expected] of [[303, 10, 310], [303, -10, 300], [310, 10, 320], [310, -10, 300], [649, 10, 650], [101, -10, 100]]) {
       await restore(page, 'top', start);

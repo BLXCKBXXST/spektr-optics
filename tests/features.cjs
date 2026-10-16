@@ -19,6 +19,37 @@ async function noOverflow(page, message) {
   assert.ok(dimensions.scroll <= dimensions.width + 1, `${message}: ${JSON.stringify(dimensions)}`);
 }
 
+async function testFilters(page) {
+  const filter = page.locator('[data-filter]');
+  const canvas = page.locator('canvas');
+  assert.deepEqual(await filter.locator('option').evaluateAll(options => options.map(option => option.value)),
+    ['none', 'red', 'green', 'blue'], 'Three color filters and the empty socket are available');
+  const spectra = [], glasses = [], swatches = [];
+  for (const value of ['none', 'red', 'green', 'blue']) {
+    await seed(page, {view: 'screen', screenMm: 540, apertureMm: 18, light: true, filter: 'none'}, {labels: false, values: false});
+    await filter.selectOption(value);
+    await page.reload();
+    await waitForLayout(page);
+    assert.equal(await filter.inputValue(), value, `${value} filter survives reopening without substitution`);
+    assert.equal((await saved(page)).modelContent.filter, value);
+    spectra.push(await canvas.evaluate(element => element.toDataURL()));
+    swatches.push(await page.locator('[data-filter-swatch]').evaluate(element => getComputedStyle(element).backgroundColor));
+    await page.locator('[data-light]').uncheck();
+    assert.notEqual(await canvas.evaluate(element => element.toDataURL()), spectra.at(-1), `${value}: turning the source off removes the spectrum`);
+    await page.locator('[data-view="optics"]').click();
+    glasses.push(await canvas.evaluate(element => element.toDataURL()));
+  }
+  assert.equal(new Set(spectra).size, 4, 'Every filter produces its own screen spectrum');
+  assert.equal(new Set(swatches).size, 4, 'The control panel previews each filter color');
+  assert.equal(new Set(glasses).size, 4, 'The model glass changes color even with the lamp and labels off');
+  await page.locator('[data-view="screen"]').click();
+  const dark = await canvas.evaluate(element => element.toDataURL());
+  for (const value of ['none', 'red', 'green', 'blue']) {
+    await filter.selectOption(value);
+    assert.equal(await canvas.evaluate(element => element.toDataURL()), dark, 'Changing filters cannot create a spectrum while the source is off');
+  }
+}
+
 async function testWindows(page, touch) {
   const original = await saved(page);
   const settings = async () => page.evaluate(() => ({
@@ -135,30 +166,34 @@ async function testPinch(page, context) {
     const canvas = page.locator('canvas');
     assert.equal(await page.locator('[data-view="grating"]').count(), 1, 'The grating has its own view');
     assert.equal(await page.locator('[data-view="optics"]').textContent(), 'Линза и щель');
-    assert.equal(await page.locator('[data-aperture]').isVisible(), false, 'Aperture control belongs to the grating view');
+    for (const view of ['overview', 'top', 'optics', 'grating', 'screen']) {
+      await page.locator(`[data-view="${view}"]`).click();
+      assert.equal(await page.locator('[data-aperture]').isVisible(), true, `Aperture remains directly available in ${view}`);
+    }
     await page.locator('[data-view="grating"]').click();
     const aperture = page.locator('[data-aperture]');
     assert.equal(await aperture.isVisible(), true);
     assert.equal(await aperture.inputValue(), '18');
-    assert.equal(await aperture.getAttribute('min'), '2');
+    assert.equal(await aperture.getAttribute('min'), '10');
     assert.equal(await aperture.getAttribute('max'), '20');
     assert.equal(await aperture.getAttribute('step'), '0.5');
     const largeHole = await canvas.evaluate(element => element.toDataURL());
     await aperture.focus();
     await page.keyboard.press('Home');
     await page.keyboard.press('ArrowRight');
-    assert.equal(await aperture.inputValue(), '2.5', 'Keyboard adjustment uses half-millimeter steps');
-    assert.equal(await canvas.getAttribute('data-aperture-mm'), '2.5');
+    assert.equal(await aperture.inputValue(), '10.5', 'Keyboard adjustment uses half-millimeter steps');
+    assert.equal(await canvas.getAttribute('data-aperture-mm'), '10.5');
     assert.notEqual(await canvas.evaluate(element => element.toDataURL()), largeHole, 'Changing the diameter changes the grating itself');
     await page.reload();
-    assert.equal(await aperture.inputValue(), '2.5', 'Aperture and its view survive reopening');
+    assert.equal(await aperture.inputValue(), '10.5', 'Aperture and its view survive reopening');
     assert.equal(await page.locator('[data-view="grating"]').getAttribute('aria-pressed'), 'true');
-    for (const [input, expected] of [[1, 2], [25, 20], [12.26, 12.5], [null, 18]]) {
+    for (const [input, expected] of [[1, 10], [2, 10], [9.5, 10], [10, 10], [25, 20], [12.26, 12.5], [null, 18]]) {
       await seed(page, {view: 'grating', apertureMm: input, screenMm: 303, light: true, filter: 'none'});
       assert.equal(Number(await aperture.inputValue()), expected, `Saved aperture ${input} restores safely`);
     }
+    await testFilters(page);
     await seed(page, {view: 'screen', filter: 'green', screenMm: 303, apertureMm: 12.5, light: true}, {zoom: 999, panX: 9, panY: -9, values: true});
-    assert.equal(await page.locator('[data-filter]').inputValue(), 'blue', 'Old green-filter settings migrate to the confirmed blue filter');
+    assert.equal(await page.locator('[data-filter]').inputValue(), 'green', 'A saved green filter remains green');
     assert.equal(await canvas.getAttribute('data-zoom-level'), '3');
     assert.equal(await canvas.getAttribute('data-pan'), '1.5000,-1.5000');
     await page.locator('[data-zoom-reset]').click();
@@ -222,6 +257,6 @@ async function testPinch(page, context) {
     await noOverflow(phone, 'Touch phone');
     assert.deepEqual(touchErrors, [], 'Touch gestures and windows have no JavaScript errors');
     await touch.close();
-    console.log('Features: grating aperture, persistence, migration, calibrated zoom, panning, pinch, safe windows and 320px layout passed.');
+    console.log('Features: 10–20 mm aperture, all-view controls, three colored filters, persistence, calibrated zoom, panning, pinch, safe windows and 320px layout passed.');
   } finally {await browser.close();}
 })().catch(error => {console.error(error); process.exitCode = 1;});

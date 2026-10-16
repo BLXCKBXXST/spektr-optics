@@ -52,7 +52,7 @@ function overlaps(a, b) {
 
 function verifyLayout(layout, name) {
   assert.ok(layout.scene && layout.panel, `${name}: two separate XP window sections`);
-  assert.equal(layout.controls.length, layout.view === 'grating' ? 15 : 14, `${name}: every relevant control is visible`);
+  assert.equal(layout.controls.length, 15, `${name}: every control, including aperture, is visible in every view`);
   assert.ok(layout.panel.top >= layout.scene.bottom - 1, `${name}: control window is underneath the scene window`);
   assert.ok(layout.canvas.width > layout.document.width * .82, `${name}: scene uses available window width`);
   assert.ok(layout.canvas.left >= layout.scene.left && layout.canvas.right <= layout.scene.right + 1, `${name}: scene does not spill out of its window`);
@@ -81,6 +81,9 @@ async function stateSnapshot(page) {
     values: document.querySelector('[data-values]').checked,
     light: document.querySelector('[data-light]').checked,
     filter: document.querySelector('[data-filter]').value,
+    aperture: document.querySelector('[data-aperture]').value,
+    zoom: document.querySelector('canvas').dataset.zoomLevel,
+    pan: document.querySelector('canvas').dataset.pan,
     screen: document.querySelector('[data-live]').textContent
   }));
 }
@@ -121,8 +124,11 @@ async function stateSnapshot(page) {
         await checkbox.setChecked(!before);
         await checkbox.setChecked(before);
       }
-      await page.locator('[data-filter]').selectOption('blue');
-      await page.locator('[data-filter]').selectOption('none');
+      for (const filter of ['red', 'green', 'blue', 'none']) await page.locator('[data-filter]').selectOption(filter);
+      await page.locator('[data-aperture]').focus();
+      await page.keyboard.press('Home');
+      await page.keyboard.press('ArrowRight');
+      assert.equal(await page.locator('[data-aperture]').inputValue(), '10.5', `${name}: aperture is usable without opening its dedicated view`);
       await page.locator('[data-move="10"]').click();
       await page.locator('[data-move="-10"]').click();
     }
@@ -134,6 +140,7 @@ async function stateSnapshot(page) {
     await page.locator('[data-values]').check();
     await page.locator('[data-light]').uncheck();
     await page.locator('[data-move="10"]').click();
+    await page.locator('[data-zoom="1"]').click();
     await waitForLayout(page);
     const state = await stateSnapshot(page);
     const initial = await canvas.boundingBox();

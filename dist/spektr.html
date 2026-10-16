@@ -26,37 +26,44 @@
     #optics-xp-sketch .xp-scene-window{display:flex;flex-direction:column;min-width:0;min-height:320px}
     #optics-xp-sketch .xp-control-window{min-width:0;align-self:start}
     #optics-xp-sketch .xp-title{display:flex;align-items:center;gap:9px;min-height:36px;padding:6px 12px;background:linear-gradient(#89a8d6 0%,var(--xp-blue) 16%,#436baa 83%,#355e9d);color:#fff;text-shadow:1px 1px #355684;font-weight:700}
-    #optics-xp-sketch .xp-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 12px;border-top:1px solid #f8f7ef;border-bottom:1px solid #aca99b;background:var(--xp-paper)}
-    #optics-xp-sketch .xp-view-group{display:flex;gap:3px;flex-wrap:wrap}
+    #optics-xp-sketch .xp-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px 20px;flex-wrap:wrap;padding:10px 12px 4px;border-top:1px solid #f8f7ef;background:var(--xp-paper)}
+    #optics-xp-sketch .xp-view-group{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+    #optics-xp-sketch .xp-group-label{font-size:12px;font-weight:700;color:#465b70;margin-right:5px}
     #optics-xp-sketch button,#optics-xp-sketch select{font:inherit;color:var(--xp-ink)}
     #optics-xp-sketch button{min-height:29px;padding:4px 12px;border:1px solid #8c939c;border-radius:3px;background:linear-gradient(#fcfbf6,#ece9db);box-shadow:inset 1px 1px #fff,inset -1px -1px #d4d0be}
     #optics-xp-sketch button:hover{border-color:#537baa;background:linear-gradient(#fffdf8,#eeeadd)}
     #optics-xp-sketch button[aria-pressed="true"]{background:#d9e4f2;border-color:#5577a5;box-shadow:inset 1px 2px 3px #899caf45}
-    #optics-xp-sketch button:focus-visible,#optics-xp-sketch select:focus-visible{outline:2px solid #2f609b;outline-offset:2px}
-    #optics-xp-sketch .xp-toggles{display:flex;align-items:center;gap:12px;margin-left:auto;flex-wrap:wrap}
-    #optics-xp-sketch .xp-label-toggle{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px}
+    #optics-xp-sketch button:focus-visible,#optics-xp-sketch select:focus-visible,#optics-xp-sketch input:focus-visible{outline:2px solid #2f609b;outline-offset:2px}
+    #optics-xp-sketch .xp-toggles{display:flex;align-items:center;gap:6px 18px;flex-wrap:wrap;padding:6px 12px 9px;border-top:1px solid #d3d0c2}
+    #optics-xp-sketch .xp-label-toggle{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px;min-height:28px;cursor:pointer}
     #optics-xp-sketch input{accent-color:#4d76ac}
     #optics-xp-sketch .xp-stage{position:relative;flex:1 1 auto;min-height:164px;height:470px;margin:9px;background:var(--xp-table);border:1px solid #89989f;box-shadow:inset 1px 1px #728891;overflow:hidden}
     #optics-xp-sketch .xp-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
     #optics-xp-sketch .xp-hover{position:absolute;display:none;padding:4px 7px;background:#fffde9;border:1px solid #9c967f;box-shadow:1px 2px 3px #394c5122;font-size:11px;pointer-events:none;white-space:nowrap}
-    #optics-xp-sketch .xp-controls{display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding:12px}
-    #optics-xp-sketch .xp-filter{display:flex;align-items:center;gap:7px}
-    #optics-xp-sketch select{height:29px;min-width:150px;border:1px solid #8496ac;border-radius:2px;background:#fdfcf6;padding:3px 23px 3px 7px}
-    #optics-xp-sketch .xp-screen-control{display:flex;align-items:center;gap:10px;margin-left:auto}
+    #optics-xp-sketch .xp-controls{display:grid;grid-template-columns:minmax(170px,1fr) minmax(210px,1.2fr) minmax(190px,1fr);gap:12px;padding:8px 12px 10px}
+    #optics-xp-sketch .xp-card{min-width:0;margin:0;padding:9px 12px 10px;border:1px solid #bab8a9;border-radius:4px;background:#f4f2e7;box-shadow:inset 0 1px #fff}
+    #optics-xp-sketch .xp-card legend{padding:0 5px;color:#3c5b7c;font-size:12px;font-weight:700}
+    #optics-xp-sketch .xp-card .xp-note{display:block;margin:7px 0 0}
+    #optics-xp-sketch .xp-filter{display:flex;align-items:center;gap:9px;min-height:38px}
+    #optics-xp-sketch .xp-filter-swatch{flex:none;width:23px;height:23px;border:1px solid #87928c;border-radius:50%;background:#e9e8dd;box-shadow:inset 2px 2px 3px #ffffff70}
+    #optics-xp-sketch select{height:34px;min-width:0;width:100%;border:1px solid #8496ac;border-radius:2px;background:#fdfcf6;padding:3px 23px 3px 7px}
+    #optics-xp-sketch .xp-screen-control{display:flex;align-items:center;justify-content:center;gap:10px}
     #optics-xp-sketch .xp-screen-control span{min-width:52px;text-align:center}
     #optics-xp-sketch .xp-screen-control button{padding:0 10px;min-width:46px;min-height:38px;font-size:25px;line-height:1;color:#315783;border-color:#6d86a3}
     #optics-xp-sketch .xp-screen-control button:disabled{color:#929c9f;border-color:#adb1ad;opacity:.65}
     #optics-xp-sketch [hidden]{display:none!important}
-    #optics-xp-sketch .xp-zoom{display:flex;align-items:center;gap:4px}
+    #optics-xp-sketch .xp-zoom{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
     #optics-xp-sketch .xp-zoom button{min-width:33px;padding:4px 7px}
     #optics-xp-sketch .xp-zoom [data-zoom-reset]{min-width:58px;font-variant-numeric:tabular-nums}
-    #optics-xp-sketch .xp-aperture-control{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:0 12px 12px}
-    #optics-xp-sketch .xp-aperture-control label{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    #optics-xp-sketch .xp-aperture-control input{width:140px;max-width:100%;min-height:28px}
-    #optics-xp-sketch .xp-aperture-control output{min-width:45px;font-variant-numeric:tabular-nums}
+    #optics-xp-sketch .xp-aperture-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px}
+    #optics-xp-sketch .xp-aperture-control input{display:block;width:100%;margin:0;min-height:29px;cursor:pointer}
+    #optics-xp-sketch .xp-aperture-control output{min-width:48px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+    #optics-xp-sketch .xp-range-ends{display:flex;justify-content:space-between;font-size:11px;color:#5a666c}
     #optics-xp-sketch .xp-note{font-size:11px;color:#5a666c}
     #optics-xp-sketch .xp-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-    @media(max-width:620px){#optics-xp-sketch .xp-stage{height:290px;margin:7px}#optics-xp-sketch .xp-title{padding:6px 9px}#optics-xp-sketch .xp-toolbar{gap:8px;padding:8px}#optics-xp-sketch button{padding:5px 8px}#optics-xp-sketch .xp-controls{gap:11px;padding:10px}#optics-xp-sketch .xp-toggles{margin-left:0;gap:5px 12px}#optics-xp-sketch .xp-screen-control{margin-left:auto}}
+    @media(max-width:760px){#optics-xp-sketch .xp-controls{grid-template-columns:1fr 1fr}#optics-xp-sketch .xp-screen-card{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px}#optics-xp-sketch .xp-screen-card .xp-note{margin:0;max-width:210px}}
+    @media(max-width:620px){#optics-xp-sketch .xp-stage{height:290px;margin:7px}#optics-xp-sketch .xp-title{padding:6px 9px}#optics-xp-sketch .xp-toolbar{gap:8px;padding:8px}#optics-xp-sketch button{padding:5px 8px}#optics-xp-sketch .xp-controls{gap:8px;padding:4px 8px 8px}#optics-xp-sketch .xp-toggles{gap:3px 12px;padding:6px 8px}#optics-xp-sketch .xp-group-label{flex-basis:100%}#optics-xp-sketch .xp-zoom .xp-group-label{flex-basis:auto}}
+    @media(max-width:440px){#optics-xp-sketch .xp-controls{grid-template-columns:1fr}#optics-xp-sketch .xp-screen-card{display:block}#optics-xp-sketch .xp-screen-card .xp-note{max-width:none;text-align:center;margin-top:6px}}
     @media(pointer:coarse){#optics-xp-sketch button,#optics-xp-sketch select{min-height:44px}#optics-xp-sketch .xp-label-toggle{min-height:44px}#optics-xp-sketch select{font-size:16px}}
   </style>
   <section class="xp-window xp-scene-window" aria-labelledby="spektr-scene-title">
@@ -71,26 +78,34 @@
     <div class="xp-title" id="spektr-controls-title"><span>Управление</span></div>
     <div class="xp-toolbar">
       <div class="xp-view-group" role="group" aria-label="Ракурс установки">
+        <span class="xp-group-label">Вид установки</span>
         <button type="button" class="cursor-interaction" data-view="overview" aria-pressed="true">Общий вид</button>
         <button type="button" class="cursor-interaction" data-view="top" aria-pressed="false">Сверху</button>
         <button type="button" class="cursor-interaction" data-view="optics" aria-pressed="false">Линза и щель</button>
         <button type="button" class="cursor-interaction" data-view="grating" aria-pressed="false">Решётка</button>
         <button type="button" class="cursor-interaction" data-view="screen" aria-pressed="false">Экран</button>
       </div>
-      <div class="xp-toggles" role="group" aria-label="Отображение и свет">
-        <label class="xp-label-toggle cursor-interaction"><input type="checkbox" data-labels checked> Подписи</label>
-        <label class="xp-label-toggle cursor-interaction"><input type="checkbox" data-values checked> Значения</label>
-        <label class="xp-label-toggle cursor-interaction"><input type="checkbox" data-light checked> Источник света</label>
-      </div>
+      <div class="xp-zoom" role="group" aria-label="Масштаб вида"><span class="xp-group-label">Масштаб</span><button type="button" data-zoom="-1" aria-label="Уменьшить вид">−</button><button type="button" data-zoom-reset aria-label="Сбросить масштаб и положение вида" title="Вернуть весь вид">100%</button><button type="button" data-zoom="1" aria-label="Увеличить вид">+</button></div>
     </div>
     <div class="xp-controls">
-      <label class="xp-filter">Фильтр <select data-filter aria-label="Светофильтр"><option value="none">Без фильтра</option><option value="blue">Синий</option><option value="red">Красный</option></select></label>
-      <div class="xp-zoom" role="group" aria-label="Масштаб вида"><button type="button" data-zoom="-1" aria-label="Уменьшить вид">−</button><button type="button" data-zoom-reset aria-label="Сбросить масштаб и положение вида" title="Вернуть весь вид">100%</button><button type="button" data-zoom="1" aria-label="Увеличить вид">+</button></div>
-      <div class="xp-screen-control" role="group" aria-label="Положение экрана"><button type="button" class="cursor-interaction" data-move="-10" aria-label="Экран: предыдущая отметка 10 мм">←</button><span>Экран</span><button type="button" class="cursor-interaction" data-move="10" aria-label="Экран: следующая отметка 10 мм">→</button></div>
+      <fieldset class="xp-card xp-filter-card"><legend>Светофильтр</legend>
+        <label class="xp-filter"><span class="xp-filter-swatch" data-filter-swatch aria-hidden="true"></span><select data-filter aria-label="Светофильтр"><option value="none">Без фильтра</option><option value="red">Красный</option><option value="green">Зелёный</option><option value="blue">Синий</option></select></label>
+        <span class="xp-note" data-light-note>Действует на весь спектр</span>
+      </fieldset>
+      <fieldset class="xp-card xp-aperture-control"><legend>Решётка</legend>
+        <div class="xp-aperture-heading"><label for="spektr-aperture">Диаметр отверстия</label><output for="spektr-aperture" data-aperture-value>18 мм</output></div>
+        <input id="spektr-aperture" type="range" min="10" max="20" step="0.5" value="18" data-aperture aria-label="Диаметр рабочего отверстия решётки">
+        <div class="xp-range-ends" aria-hidden="true"><span>10 мм</span><span>20 мм</span></div>
+      </fieldset>
+      <fieldset class="xp-card xp-screen-card"><legend>Перемещение экрана</legend>
+        <div class="xp-screen-control" role="group" aria-label="Положение экрана"><button type="button" class="cursor-interaction" data-move="-10" aria-label="Экран: предыдущая отметка 10 мм">←</button><span>Экран</span><button type="button" class="cursor-interaction" data-move="10" aria-label="Экран: следующая отметка 10 мм">→</button></div>
+        <span class="xp-note">По отметкам 10 мм; вручную — 1 мм</span>
+      </fieldset>
     </div>
-    <div class="xp-aperture-control" hidden>
-      <label>Диаметр отверстия <input type="range" min="2" max="20" step="0.5" value="18" data-aperture aria-label="Диаметр рабочего отверстия решётки"><output data-aperture-value>18 мм</output></label>
-      <span class="xp-note">Пределы регулировки пока приблизительные.</span>
+    <div class="xp-toggles" role="group" aria-label="Отображение и свет">
+      <label class="xp-label-toggle cursor-interaction" title="Названия приборов на установке"><input type="checkbox" data-labels checked> Подписи</label>
+      <label class="xp-label-toggle cursor-interaction" title="Положения приборов и линейка на экране"><input type="checkbox" data-values checked> Значения</label>
+      <label class="xp-label-toggle cursor-interaction"><input type="checkbox" data-light checked> Источник света</label>
     </div>
     <span class="xp-sr" data-live aria-live="polite"></span>
   </section>
@@ -110,7 +125,7 @@ const SpektrSpectrum = (() => {
   'use strict';
 
   const GRATING_PERIOD_MM = 0.01;
-  const MIN_APERTURE_MM = 2;
+  const MIN_APERTURE_MM = 10;
   const MAX_APERTURE_MM = 20;
   const DEFAULT_APERTURE_MM = 18;
   const MIN_WAVELENGTH_NM = 380;
@@ -141,6 +156,7 @@ const SpektrSpectrum = (() => {
 
   function transmission(wavelengthNm, filter) {
     if (filter === 'red') return Math.exp(-0.5 * ((wavelengthNm - 650) / 22) ** 2);
+    if (filter === 'green') return Math.exp(-0.5 * ((wavelengthNm - 550) / 22) ** 2);
     if (filter === 'blue') return Math.exp(-0.5 * ((wavelengthNm - 465) / 21) ** 2);
     return 1;
   }
@@ -170,7 +186,7 @@ const SpektrSpectrum = (() => {
   function profile(options = {}) {
     const distanceMm = clamp(finite(options.distanceMm, 605), 1, 5000);
     const apertureMm = clamp(finite(options.apertureMm, DEFAULT_APERTURE_MM), MIN_APERTURE_MM, MAX_APERTURE_MM);
-    const filter = options.filter === 'red' || options.filter === 'blue' ? options.filter : 'none';
+    const filter = ['red', 'green', 'blue'].includes(options.filter) ? options.filter : 'none';
     const widthMm = clamp(finite(options.widthMm, 270), 1, 2000);
     const samples = clamp(Math.round(finite(options.samples, 1080)), 2, 8192);
     const stepMm = widthMm / samples;
@@ -257,7 +273,29 @@ const SpektrSpectrum = (() => {
     });
   }
 
-  return Object.freeze({ profile, toDisplay, displayRgb, transmission, orderPositionMm, blurSigmaMm,
+  function screenStrip(lightProfile) {
+    const pixels = new Uint8ClampedArray(lightProfile.samples * 4);
+    for (let i = 0; i < lightProfile.samples; i++) {
+      const source = i * 3, target = i * 4;
+      const channels = [0, 1, 2].map(channel => Math.max(0, finite(lightProfile.rgb[source + channel], 0)));
+      const peak = Math.max(...channels);
+      if (peak === 0) continue;
+      const hue = displayRgb(...channels.map(value => value / peak), 8);
+      // A restrained, paper-like palette instead of fully saturated primaries.
+      // This is display styling only; the linear light profile stays untouched.
+      for (let channel = 0; channel < 3; channel++) {
+        pixels[target + channel] = Math.round(218 + (hue[channel] - 218) * 0.62);
+      }
+      // One common curve reduces bright-band contrast, while its soft toe keeps
+      // faint higher orders visible. No per-frame normalization or light floor:
+      // narrowing the aperture still dims the picture and zero light is clear.
+      const exposed = -Math.expm1(-peak * 3.2);
+      pixels[target + 3] = Math.round(255 * 0.72 * exposed ** 0.8);
+    }
+    return pixels;
+  }
+
+  return Object.freeze({ profile, toDisplay, displayRgb, screenStrip, transmission, orderPositionMm, blurSigmaMm,
     GRATING_PERIOD_MM, MIN_APERTURE_MM, MAX_APERTURE_MM, DEFAULT_APERTURE_MM });
 })();
 
@@ -280,7 +318,7 @@ function setupSpektrWindows(root, onLayout = () => {}) {
     #optics-xp-sketch.xp-window-expanded{height:auto;grid-template-rows:auto auto;align-content:start}
     #optics-xp-sketch .xp-window.is-expanded:not(.is-minimized){min-height:calc(100vh - 2 * var(--page-padding,12px));min-height:calc(100dvh - 2 * var(--page-padding,12px))}
     #optics-xp-sketch .xp-control-window.is-expanded:not(.is-minimized){display:flex;flex-direction:column}
-    #optics-xp-sketch .xp-control-window.is-expanded:not(.is-minimized) .xp-toolbar{flex:1;align-content:center}
+    #optics-xp-sketch .xp-control-window.is-expanded:not(.is-minimized) .xp-controls{flex:1;align-content:center}
     #optics-xp-sketch .xp-window-toast{position:fixed;right:12px;bottom:12px;z-index:10;max-width:calc(100vw - 24px);padding:9px 12px;border:1px solid #9c967f;border-radius:3px;background:#fff9dd;box-shadow:0 2px 7px #26384d25;color:#24323c;pointer-events:none}
     #optics-xp-sketch .xp-window-toast[hidden]{display:none}
     @media(pointer:coarse){#optics-xp-sketch .xp-window-actions button{width:44px;min-width:44px;min-height:44px}}
@@ -446,7 +484,7 @@ function setupSpektrWindows(root, onLayout = () => {}) {
     function base(x0,x1,individual=false){const edge=individual?37:33;box(x0,x1,-edge,33,45,82,'#c9c7b9');screw(x0+10,-20,82);screw(x1-10,20,82);box(x0+3,x1-3,-edge-4,-edge,49,76,individual?'#8d9a93':'#989d96');}
     function holder(x,type){
       cylinderZ(x,0,82,144,14,'#c5c5b8',8);cylinderZ(x,0,140,153,8,'#989f9b',8);box(x-15,x+15,-34,34,143,153,'#bfc2b6');
-      const glass=type==='lens'?'#adc7c8':type==='grating'?'#b3c3bc':type==='red'?'#a75243':type==='blue'?'#526faa':null;
+      const glass=type==='lens'?'#adc7c8':type==='grating'?'#b3c3bc':type==='red'?'#a75243':type==='green'?'#658c67':type==='blue'?'#526faa':null;
       let face=ring(x,0,195,48,type==='grating'?35:31,17,'#ddd9c9',design.facets,type==='grating'?null:glass);
       if(type==='grating'){
         // A fixed carrier around a variable clear aperture; its mechanism is not known from the photo.
@@ -467,13 +505,7 @@ function setupSpektrWindows(root, onLayout = () => {}) {
       const profile=SpektrSpectrum.profile({distanceMm:855-state.screen,apertureMm:state.aperture,filter:state.filter,light:state.light});
       const strip=lightStrip||document.createElement('canvas');strip.width=profile.samples;strip.height=1;
       const c=strip.getContext('2d'),pixels=c.createImageData(profile.samples,1);
-      for(let i=0;i<profile.samples;i++){
-        const j=i*3,k=i*4,peak=Math.max(profile.rgb[j],profile.rgb[j+1],profile.rgb[j+2]);
-        // Hue is normalized per pixel, but opacity retains absolute flux across all settings.
-        const hue=peak?SpektrSpectrum.displayRgb(profile.rgb[j]/peak,profile.rgb[j+1]/peak,profile.rgb[j+2]/peak,8):[0,0,0];
-        for(let channel=0;channel<3;channel++)pixels.data[k+channel]=hue[channel];
-        pixels.data[k+3]=Math.round(255*(1-Math.exp(-peak*3.2)));
-      }
+      pixels.data.set(SpektrSpectrum.screenStrip(profile));
       c.putImageData(pixels,0,0);lightStrip=strip;lightStripKey=key;return strip;
     }
     function screenFace(x){
@@ -657,12 +689,13 @@ function setupSpektrWindows(root, onLayout = () => {}) {
       canvas.dataset.pan=state.panX.toFixed(4)+','+state.panY.toFixed(4);
       root.querySelector('[data-zoom-reset]').textContent=Math.round(state.zoom*100)+'%';
       root.querySelectorAll('[data-zoom]').forEach(b=>b.disabled=Number(b.dataset.zoom)<0?state.zoom<=.75:state.zoom>=3);
-      root.querySelector('.xp-aperture-control').hidden=state.view!=='grating';
       root.querySelector('[data-aperture]').value=state.aperture;
       root.querySelector('[data-aperture-value]').textContent=String(state.aperture).replace('.',',')+' мм';
       root.querySelector('[data-aperture]').setAttribute('aria-valuetext',state.aperture+' миллиметров');
       root.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===state.view)));
       root.querySelector('[data-light]').checked=state.light;root.querySelector('[data-filter]').value=state.filter;root.querySelector('[data-labels]').checked=state.labels;
+      root.querySelector('[data-filter-swatch]').style.backgroundColor=({none:'#e9e8dd',red:'#bd8179',green:'#88a887',blue:'#879fc1'})[state.filter];
+      root.querySelector('[data-light-note]').textContent=state.light?'Действует на весь спектр':'Источник света выключен';
       root.querySelector('[data-values]').checked=state.values;
       root.querySelectorAll('[data-move]').forEach(b=>b.disabled=(Number(b.dataset.move)<0&&state.screen<=100)||(Number(b.dataset.move)>0&&state.screen>=650));
     }
@@ -692,9 +725,9 @@ function setupSpektrWindows(root, onLayout = () => {}) {
       if(!saved||typeof saved!=='object')return;
       const m=saved.modelContent||saved,p=saved.privateContent||{};
       if(views[m.view])state.view=m.view;if(Number.isFinite(m.screenMm))state.screen=clamp(Math.round(m.screenMm),100,650);
-      if(m.filter==='green')state.filter='blue';else if(['none','red','blue'].includes(m.filter))state.filter=m.filter;if(typeof m.light==='boolean')state.light=m.light;if(typeof p.labels==='boolean')state.labels=p.labels;
+      if(['none','red','green','blue'].includes(m.filter))state.filter=m.filter;if(typeof m.light==='boolean')state.light=m.light;if(typeof p.labels==='boolean')state.labels=p.labels;
       if(typeof p.values==='boolean')state.values=p.values;
-      if(Number.isFinite(m.apertureMm))state.aperture=clamp(Math.round(m.apertureMm*2)/2,2,20);
+      if(Number.isFinite(m.apertureMm))state.aperture=clamp(Math.round(m.apertureMm*2)/2,SpektrSpectrum.MIN_APERTURE_MM,SpektrSpectrum.MAX_APERTURE_MM);
       if(Number.isFinite(p.zoom))state.zoom=clamp(p.zoom,.75,3);
       if(Number.isFinite(p.panX))state.panX=clamp(p.panX,-1.5,1.5);
       if(Number.isFinite(p.panY))state.panY=clamp(p.panY,-1.5,1.5);
@@ -709,7 +742,7 @@ function setupSpektrWindows(root, onLayout = () => {}) {
     root.querySelector('[data-labels]').addEventListener('change',e=>{state.labels=e.target.checked;changed();});
     root.querySelector('[data-values]').addEventListener('change',e=>{state.values=e.target.checked;clearPointer();changed();});
     root.querySelectorAll('[data-move]').forEach(b=>b.addEventListener('click',()=>{const next=Number(b.dataset.move)>0?(Math.floor(state.screen/10)+1)*10:(Math.ceil(state.screen/10)-1)*10;state.screen=clamp(next,100,650);clearPointer();changed();announce(`Экран на отметке ${state.screen} миллиметров`);}));
-    root.querySelector('[data-aperture]').addEventListener('input',e=>{state.aperture=clamp(Number(e.target.value),2,20);clearPointer();changed();});
+    root.querySelector('[data-aperture]').addEventListener('input',e=>{state.aperture=clamp(Number(e.target.value),SpektrSpectrum.MIN_APERTURE_MM,SpektrSpectrum.MAX_APERTURE_MM);clearPointer();changed();});
     function zoomAt(value,p=[W/2,H/2]){
       camera();
       const oldZoom=state.zoom,oldX=ox,oldY=oy;

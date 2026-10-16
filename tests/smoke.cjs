@@ -26,11 +26,12 @@ const assert = require('node:assert/strict');
   await app.locator('[data-light]').uncheck();
   assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),on,'Light switch changes the sketch');
   await app.locator('[data-light]').check();
-  await app.locator('[data-filter]').selectOption('blue');
-  const blue=await canvas.evaluate(c=>c.toDataURL());
-  assert.notEqual(blue,on,'Blue filter changes the sketch');
-  await app.locator('[data-filter]').selectOption('red');
-  assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),blue,'Red and blue differ');
+  const filterImages=[on];
+  for(const filter of ['red','green','blue']){
+    await app.locator('[data-filter]').selectOption(filter);
+    filterImages.push(await canvas.evaluate(c=>c.toDataURL()));
+  }
+  assert.equal(new Set(filterImages).size,4,'Red, green, blue, and unfiltered spectra all differ');
   await app.locator('[data-filter]').selectOption('none');
   await app.locator('[data-view="top"]').click();
   await app.locator('[data-move="10"]').click();
